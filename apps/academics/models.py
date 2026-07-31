@@ -51,17 +51,17 @@ class Room(BaseModel):
 
 
 class ClassSubject(BaseModel):
-    """Pivot table: bridges classes <-> subjects (M:N), links teacher to a class+subject combo."""
     class_obj = models.ForeignKey(Class, on_delete=models.CASCADE, related_name='class_subjects')
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='class_subjects')
     teacher = models.ForeignKey('users.Teacher', on_delete=models.SET_NULL, null=True, related_name='class_subjects')
 
     class Meta:
         db_table = 'class_subjects'
+        # ✅ Prevents duplicate: same class + same subject + same teacher
+        unique_together = ['class_obj', 'subject', 'teacher']
 
     def __str__(self):
         return f"{self.class_obj.name} - {self.subject.name}"
-
 
 class Timetable(BaseModel):
     DAY_CHOICES = [

@@ -1,4 +1,5 @@
 from django.contrib import admin
-# from .models import ExampleTable
+from .models import DocumentType, Document
 
-# admin.site.register(ExampleTable)
+admin.site.register(DocumentType)
+admin.site.register(Document)
