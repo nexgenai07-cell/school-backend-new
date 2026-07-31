@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import GradeScale, Exam, Question, StudentAnswer, Result, AIAutoChecking
 
-
+from django.utils import timezone
 class GradeScaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = GradeScale
@@ -53,12 +53,24 @@ class QuestionSerializer(serializers.ModelSerializer):
         return data
 
 
+
+
 class StudentAnswerSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentAnswer
         fields = '__all__'
-        read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted', 'is_correct', 'marks_awarded']
 
+    def validate(self, data):
+        exam = data.get('exam') or getattr(self.instance, 'exam', None)
+
+        # Sirf CREATE ke waqt date check karein (update/PATCH pe nahi, taake teacher/admin baad mein bhi is_correct set kar sakein)
+        if self.instance is None:  # matlab yeh naya create ho raha hai
+            if exam and exam.date < timezone.now().date():
+                raise serializers.ValidationError(
+                    "This exam has already passed. Answers cannot be submitted after the exam date."
+                )
+        return data
 
 class ResultSerializer(serializers.ModelSerializer):
     class Meta:

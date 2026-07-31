@@ -171,7 +171,16 @@ class FinancePermission(BasePermission):
             return True
         if request.method not in SAFE_METHODS:
             return False
+
+        # Fee has `student` directly
         student = getattr(obj, 'student', None)
+
+        # Payment and FeeHistory have `fee` instead — fall back through it
+        if student is None:
+            fee = getattr(obj, 'fee', None)
+            if fee is not None:
+                student = getattr(fee, 'student', None)
+
         if student is None:
             return False
         if request.user.role == 'student':
@@ -179,7 +188,6 @@ class FinancePermission(BasePermission):
         if request.user.role == 'parent':
             return student.parent.user_id == request.user.id
         return False
-
 
 class HRPermission(BasePermission):
     def has_permission(self, request, view):
@@ -266,17 +274,27 @@ class PTMPermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user.role in ['admin', 'teacher']:
             return True
+
+        # Direct fields (PTM, PTMMeeting objects have these)
         student = getattr(obj, 'student', None)
         parent = getattr(obj, 'parent', None)
+
+        # PTMAttendee doesn't have `student` directly — fall back to ptm_meeting.student
+        if student is None:
+            ptm_meeting = getattr(obj, 'ptm_meeting', None)
+            if ptm_meeting is not None:
+                student = getattr(ptm_meeting, 'student', None)
+
         if request.user.role == 'parent':
             if parent is not None:
                 return parent.user_id == request.user.id
             if student is not None:
                 return student.parent.user_id == request.user.id
+
         if request.user.role == 'student' and student is not None:
             return student.user_id == request.user.id
-        return False
 
+        return False
 
 class CanteenPermission(BasePermission):
     def has_permission(self, request, view):
