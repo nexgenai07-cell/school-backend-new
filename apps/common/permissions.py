@@ -140,22 +140,29 @@ class IsOwnerParentOrAdmin(BasePermission):
 
 
 class IsAssignedTeacherOrAdmin(BasePermission):
-    """✅ FIX #1: Question model has no direct teacher field — fallback to exam.teacher."""
+    """
+    FIX #1: Restricts write access (POST/PUT/PATCH/DELETE) to admin/teacher only —
+            prevents students/parents from creating records.
+    FIX #2: Question model has no direct `teacher` field — falls back to exam.teacher
+            for object-level ownership check.
+    """
     def has_permission(self, request, view):
-        return request.user.is_authenticated
+        if not request.user.is_authenticated:
+            return False
+        if request.method in SAFE_METHODS:
+            return True
+        return request.user.role in ['admin', 'teacher']
 
     def has_object_permission(self, request, view, obj):
         if request.user.role == 'admin':
             return True
         if request.user.role == 'teacher':
             teacher = getattr(obj, 'teacher', None)
-            # ✅ FIX: Question model has no direct teacher — fallback to exam.teacher
             if teacher is None:
                 exam = getattr(obj, 'exam', None)
                 teacher = getattr(exam, 'teacher', None) if exam else None
             return teacher is not None and teacher.user_id == request.user.id
         return request.method in SAFE_METHODS
-
 
 # ---- Module-specific composites -------------------------------------------
 class FinancePermission(BasePermission):

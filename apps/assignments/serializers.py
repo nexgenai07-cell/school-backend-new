@@ -8,6 +8,22 @@ class AssignmentSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
 
+    def validate(self, data):
+        request = self.context.get('request')
+        teacher_user = request.user if request else None
+        subject = data.get('subject') or getattr(self.instance, 'subject', None)
+        class_obj = data.get('class_obj') or getattr(self.instance, 'class_obj', None)
+
+        if teacher_user and teacher_user.role == 'teacher' and subject and class_obj:
+            from apps.academics.models import ClassSubject
+            is_assigned = ClassSubject.objects.filter(
+                teacher__user=teacher_user, subject=subject, class_obj=class_obj
+            ).exists()
+            if not is_assigned:
+                raise serializers.ValidationError(
+                    f"You are not assigned to teach {subject} for this class."
+                )
+        return data
 
 class SubmissionSerializer(serializers.ModelSerializer):
     class Meta:
