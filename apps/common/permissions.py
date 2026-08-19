@@ -124,20 +124,34 @@ class IsSelfStudentOrAdminOrTeacher(BasePermission):
 
 class IsOwnerParentOrAdmin(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated
+        if not request.user.is_authenticated:
+            return False
+        if request.method in SAFE_METHODS:
+            return True
+        # FIX: write access sirf admin/teacher tak — Student/Parent read-only rahenge
+        return request.user.role in ['admin', 'teacher']
 
     def has_object_permission(self, request, view, obj):
         if request.user.role in ['admin', 'teacher']:
             return True
-        student = getattr(obj, 'student', None)
-        if student is None:
-            return False
-        if request.user.role == 'parent':
-            return student.parent.user_id == request.user.id
-        if request.user.role == 'student':
-            return student.user_id == request.user.id
-        return False
 
+        student = getattr(obj, 'student', None)
+
+        if request.user.role == 'parent':
+            if student is not None:
+                return student.parent.user_id == request.user.id
+            # FIX: ParentEngagement has `parent` directly, not `student` — fallback
+            parent = getattr(obj, 'parent', None)
+            if parent is not None:
+                return parent.user_id == request.user.id
+            return False
+
+        if request.user.role == 'student':
+            if student is None:
+                return False
+            return student.user_id == request.user.id
+
+        return False
 
 class IsAssignedTeacherOrAdmin(BasePermission):
     """
@@ -279,30 +293,38 @@ class PTMPermission(BasePermission):
         return request.user.role in ['admin', 'teacher']
 
     def has_object_permission(self, request, view, obj):
-        if request.user.role in ['admin', 'teacher']:
+        user = request.user
+        
+        # Admin/Teacher -> full access
+        if user.role in ['admin', 'teacher']:
             return True
-
-        # Direct fields (PTM, PTMMeeting objects have these)
-        student = getattr(obj, 'student', None)
-        parent = getattr(obj, 'parent', None)
-
-        # PTMAttendee doesn't have `student` directly — fall back to ptm_meeting.student
-        if student is None:
-            ptm_meeting = getattr(obj, 'ptm_meeting', None)
-            if ptm_meeting is not None:
-                student = getattr(ptm_meeting, 'student', None)
-
-        if request.user.role == 'parent':
-            if parent is not None:
-                return parent.user_id == request.user.id
-            if student is not None:
-                return student.parent.user_id == request.user.id
-
-        if request.user.role == 'student' and student is not None:
-            return student.user_id == request.user.id
-
+        
+        # Parent -> check if object belongs to their children
+        if user.role == 'parent':
+            # ✅ PTM object -> check class_obj students
+            if hasattr(obj, 'class_obj') and obj.class_obj:
+                return obj.class_obj.students.filter(parent__user=user).exists()
+            
+            # PTMMeeting object -> check student's parent
+            if hasattr(obj, 'student') and obj.student:
+                return obj.student.parent.user_id == user.id
+            
+            # PTMAttendee object -> check parent directly
+            if hasattr(obj, 'parent') and obj.parent:
+                return obj.parent.user_id == user.id
+            
+            # PTMAttendee with ptm_meeting fallback
+            if hasattr(obj, 'ptm_meeting') and obj.ptm_meeting:
+                return obj.ptm_meeting.student.parent.user_id == user.id
+        
+        # Student -> check if object belongs to them
+        if user.role == 'student':
+            if hasattr(obj, 'student') and obj.student:
+                return obj.student.user_id == user.id
+            if hasattr(obj, 'ptm_meeting') and obj.ptm_meeting:
+                return obj.ptm_meeting.student.user_id == user.id
+        
         return False
-
 class CanteenPermission(BasePermission):
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
@@ -347,14 +369,21 @@ class DocumentsPermission(BasePermission):
             return True
         if getattr(obj, 'user_id', None) == request.user.id:
             return True
-        if request.user.role == 'parent':
-            target_user = getattr(obj, 'user', None)
-            student_profile = getattr(target_user, 'student_profile', None)
-            if student_profile is not None:
-                return student_profile.parent.user_id == request.user.id
+
+        target_user = getattr(obj, 'user', None)
+        student_profile = getattr(target_user, 'student_profile', None) if target_user else None
+
+        if request.user.role == 'parent' and student_profile is not None:
+            return student_profile.parent.user_id == request.user.id
+
+        if request.user.role == 'teacher' and student_profile is not None:
+            return student_profile.class_obj.class_subjects.filter(teacher__user=request.user).exists()
+
+        if request.user.role == 'staff':
+            # Staff (e.g. front office/librarian) can view any student's documents
+            return student_profile is not None
+
         return False
-
-
 class SecurityPermission(BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated:

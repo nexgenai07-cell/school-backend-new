@@ -1,6 +1,7 @@
 from apps.common.models import BaseModel
 from django.db import models
-
+# apps/security/models.py mein EntryExitLog class update karein
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 class Visitor(BaseModel):
     name = models.CharField(max_length=150)
@@ -34,6 +35,8 @@ class AccessLog(BaseModel):
         return f"{self.user} - {self.action}"
 
 
+
+
 class EntryExitLog(BaseModel):
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='entry_exit_logs')
     entry_time = models.DateTimeField(null=True, blank=True)
@@ -41,6 +44,25 @@ class EntryExitLog(BaseModel):
 
     class Meta:
         db_table = 'entry_exit_logs'
+
+    def clean(self):
+        if self.student_id and self.entry_time:
+            duplicate = EntryExitLog.objects.filter(
+                student_id=self.student_id, entry_time=self.entry_time
+            ).exclude(pk=self.pk)
+            if duplicate.exists():
+                raise DjangoValidationError("An entry log for this student at this exact time already exists.")
+
+        if self.student_id and not self.pk and self.exit_time is None:
+            open_entry = EntryExitLog.objects.filter(student_id=self.student_id, exit_time__isnull=True)
+            if open_entry.exists():
+                raise DjangoValidationError(
+                    "This student already has an open entry (no exit recorded yet)."
+                )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student} entry/exit"

@@ -31,13 +31,25 @@ class BusStudentSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         bus = data.get('bus') or getattr(self.instance, 'bus', None)
+        student = data.get('student') or getattr(self.instance, 'student', None)
+
+        # Existing check: bus capacity se zyada students na hon
         current_count = BusStudent.objects.filter(bus=bus).exclude(
             id=getattr(self.instance, 'id', None)
         ).count()
         if current_count >= bus.capacity:
             raise serializers.ValidationError(f"Bus {bus.bus_no} is at full capacity ({bus.capacity}).")
-        return data
 
+        # NEW: ek student sirf ek hi bus mein assigned ho sakta hai (duplicate prevention)
+        duplicate = BusStudent.objects.filter(student=student).exclude(
+            id=getattr(self.instance, 'id', None)
+        )
+        if duplicate.exists():
+            raise serializers.ValidationError(
+                f"{student} is already assigned to a bus. Remove the existing assignment before adding a new one."
+            )
+
+        return data
 class TransportAttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransportAttendance

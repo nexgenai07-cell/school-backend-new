@@ -30,16 +30,24 @@ class SectionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role == 'admin':
-            return Section.objects.all()
-        if user.role == 'teacher':
-            return Section.objects.filter(class_obj__class_subjects__teacher__user=user).distinct()
-        if user.role == 'student':
-            return Section.objects.filter(class_obj__students__user=user)
-        if user.role == 'parent':
-            return Section.objects.filter(class_obj__students__parent__user=user).distinct()
-        return Section.objects.none()
 
+        if user.role == 'admin':
+            queryset = Section.objects.all()
+        elif user.role == 'teacher':
+            queryset = Section.objects.filter(class_obj__class_subjects__teacher__user=user).distinct()
+        elif user.role == 'student':
+            queryset = Section.objects.filter(class_obj__students__user=user)
+        elif user.role == 'parent':
+            queryset = Section.objects.filter(class_obj__students__parent__user=user).distinct()
+        else:
+            queryset = Section.objects.none()
+
+        # React frontend ke liye — Class select karne pe uski sections filter karne ka support
+        class_id = self.request.query_params.get('class_obj')
+        if class_id:
+            queryset = queryset.filter(class_obj_id=class_id)
+
+        return queryset
 
 class SubjectViewSet(viewsets.ModelViewSet):
     serializer_class = SubjectSerializer
@@ -67,13 +75,12 @@ class RoomViewSet(viewsets.ModelViewSet):
         if user.role == 'admin':
             return Room.objects.all()
         if user.role == 'teacher':
-            return Room.objects.filter(timetable__teacher__user=user).distinct()
+            return Room.objects.filter(timetable_slots__teacher__user=user).distinct()
         if user.role == 'student':
-            return Room.objects.filter(timetable__class_obj__students__user=user).distinct()
+            return Room.objects.filter(timetable_slots__class_obj__students__user=user).distinct()
         if user.role == 'parent':
-            return Room.objects.filter(timetable__class_obj__students__parent__user=user).distinct()
+            return Room.objects.filter(timetable_slots__class_obj__students__parent__user=user).distinct()
         return Room.objects.none()
-
 
 class ClassSubjectViewSet(viewsets.ModelViewSet):
     serializer_class = ClassSubjectSerializer

@@ -29,10 +29,11 @@ class Exam(BaseModel):
 
     class Meta:
         db_table = 'exams'
+        # ✅ Yeh constraint database level pe duplicate rokega
+        unique_together = ['class_obj', 'subject', 'exam_type']
 
     def __str__(self):
         return self.name
-
 
 class Question(BaseModel):
     QUESTION_TYPE_CHOICES = [('mcq', 'MCQ'), ('short', 'Short'), ('long', 'Long')]

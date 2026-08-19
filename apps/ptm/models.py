@@ -33,10 +33,11 @@ class PTMMeeting(BaseModel):
 
     class Meta:
         db_table = 'ptm_meetings'
+        # ✅ Database level constraint: Same teacher + same date + same time = unique
+        unique_together = ['teacher', 'meeting_date', 'start_time', 'end_time']
 
     def __str__(self):
         return f"{self.ptm.name} - {self.student}"
-
 
 class PTMAttendee(BaseModel):
     ptm_meeting = models.ForeignKey(PTMMeeting, on_delete=models.CASCADE, related_name='attendees')

@@ -15,6 +15,56 @@ class BookIssueSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
 
+    def validate(self, data):
+        book = data.get('book') or getattr(self.instance, 'book', None)
+        student = data.get('student') or getattr(self.instance, 'student', None)
+
+        # Validation 1: Same book already issued
+        if student and book:
+            existing_issue = BookIssue.objects.filter(
+                student=student,
+                book=book,
+                status__in=['issued', 'overdue']
+            ).exclude(id=getattr(self.instance, 'id', None))
+            if existing_issue.exists():
+                raise serializers.ValidationError(
+                    f"{student.user.name} has already issued '{book.title}' and not returned it yet."
+                )
+
+        # Validation 2: Overdue books check
+        if student:
+            overdue_books = BookIssue.objects.filter(
+                student=student,
+                status='overdue'
+            ).exclude(id=getattr(self.instance, 'id', None))
+            if overdue_books.exists():
+                book_titles = [issue.book.title for issue in overdue_books]
+                raise serializers.ValidationError(
+                    f"{student.user.name} has overdue book(s): {', '.join(book_titles)}. "
+                    f"Please return them before issuing a new book."
+                )
+
+        # Validation 3: Max books limit
+        if student:
+            max_allowed = 3
+            current_issued = BookIssue.objects.filter(
+                student=student,
+                status__in=['issued', 'overdue']
+            ).exclude(id=getattr(self.instance, 'id', None)).count()
+            if current_issued >= max_allowed:
+                raise serializers.ValidationError(
+                    f"{student.user.name} has already issued {current_issued} book(s). "
+                    f"Maximum {max_allowed} books allowed at a time."
+                )
+
+        # Validation 4: Available copies
+        if book and book.available_copies <= 0:
+            raise serializers.ValidationError(
+                f"No copies of '{book.title}' are available right now."
+            )
+
+        return data
+
 
 class BookIssueHistorySerializer(serializers.ModelSerializer):
     class Meta:

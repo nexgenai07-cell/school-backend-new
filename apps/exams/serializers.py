@@ -9,11 +9,43 @@ class GradeScaleSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
 
 
+
+
+
 class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
+
+    # ✅ Duplicate check
+    def validate(self, data):
+        class_obj = data.get('class_obj')
+        subject = data.get('subject')
+        exam_type = data.get('exam_type')
+        
+        # Check if combination already exists
+        if Exam.objects.filter(
+            class_obj=class_obj,
+            subject=subject,
+            exam_type=exam_type
+        ).exists():
+            # If updating, exclude current instance
+            if self.instance:
+                if Exam.objects.filter(
+                    class_obj=class_obj,
+                    subject=subject,
+                    exam_type=exam_type
+                ).exclude(id=self.instance.id).exists():
+                    raise serializers.ValidationError(
+                        f"Exam already exists for {class_obj.name} - {subject.name} ({exam_type})"
+                    )
+            else:
+                raise serializers.ValidationError(
+                    f"Exam already exists for {class_obj.name} - {subject.name} ({exam_type})"
+                )
+        
+        return data
 
 
 class QuestionSerializer(serializers.ModelSerializer):

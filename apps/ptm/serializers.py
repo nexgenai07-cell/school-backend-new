@@ -21,15 +21,58 @@ class PTMMeetingSerializer(serializers.ModelSerializer):
         start_time = data.get('start_time') or getattr(self.instance, 'start_time', None)
         end_time = data.get('end_time') or getattr(self.instance, 'end_time', None)
 
-        clashes = PTMMeeting.objects.filter(
-            teacher=teacher, meeting_date=meeting_date,
-            start_time__lt=end_time, end_time__gt=start_time,
+        # ✅ Validation 1: Teacher already has a meeting at this time
+        teacher_clashes = PTMMeeting.objects.filter(
+            teacher=teacher,
+            meeting_date=meeting_date,
+            start_time__lt=end_time,
+            end_time__gt=start_time,
         )
         if self.instance:
-            clashes = clashes.exclude(id=self.instance.id)
-        if clashes.exists():
-            raise serializers.ValidationError("Teacher already has a meeting at this time.")
+            teacher_clashes = teacher_clashes.exclude(id=self.instance.id)
+        if teacher_clashes.exists():
+            raise serializers.ValidationError(
+                f"Teacher {teacher.user.name} already has a meeting at this time."
+            )
+
+        # ✅ Validation 2: Student already has a meeting at this time
+        student = data.get('student') or getattr(self.instance, 'student', None)
+        student_clashes = PTMMeeting.objects.filter(
+            student=student,
+            meeting_date=meeting_date,
+            start_time__lt=end_time,
+            end_time__gt=start_time,
+        )
+        if self.instance:
+            student_clashes = student_clashes.exclude(id=self.instance.id)
+        if student_clashes.exists():
+            raise serializers.ValidationError(
+                f"Student {student.user.name} already has a meeting at this time."
+            )
+
+        # ✅ Validation 3: End time must be after start time
+        if start_time and end_time and start_time >= end_time:
+            raise serializers.ValidationError(
+                "End time must be after start time."
+            )
+
+        # ✅ Validation 4: Same teacher + same student + same date + same time
+        exact_duplicate = PTMMeeting.objects.filter(
+            teacher=teacher,
+            student=student,
+            meeting_date=meeting_date,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        if self.instance:
+            exact_duplicate = exact_duplicate.exclude(id=self.instance.id)
+        if exact_duplicate.exists():
+            raise serializers.ValidationError(
+                f"A meeting for {student.user.name} with {teacher.user.name} already exists at this time."
+            )
+
         return data
+
 
 class PTMAttendeeSerializer(serializers.ModelSerializer):
     class Meta:
