@@ -8,6 +8,14 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('Email is required')
         email = self.normalize_email(email)
+
+        # FIX: sirf admin role wale users ko Django admin panel access mile
+        if role == 'admin':
+            extra_fields.setdefault('is_staff', True)
+        else:
+            extra_fields['is_staff'] = False
+            extra_fields['is_superuser'] = False
+
         user = self.model(email=email, name=name, role=role, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)

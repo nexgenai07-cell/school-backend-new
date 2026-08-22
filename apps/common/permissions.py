@@ -221,10 +221,17 @@ class HRPermission(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user.role == 'admin':
             return True
+
+        # Employee model has `user` directly
+        if getattr(obj, 'user_id', None) == request.user.id:
+            return True
+
+        # Leave/Payroll/SalaryHistory/LeaveHistory have `employee` -> employee.user
         employee = getattr(obj, 'employee', None)
-        return employee is not None and employee.user_id == request.user.id
+        if employee is not None:
+            return employee.user_id == request.user.id
 
-
+        return False
 # ✅ FIX #3: New LeavePermission
 class LeavePermission(BasePermission):
     """Employee can create/view own leave; only admin can approve/reject."""

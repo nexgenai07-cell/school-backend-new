@@ -20,23 +20,51 @@ class LeaveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Leave
         fields = '__all__'
-        read_only_fields = ['status']  # ✅ Default: status read-only
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
+        # NOTE: 'status' yahan se hataya — warna admin bhi approve/reject nahi kar payega,
+        # DRF read-only field ko input se pehle hi drop kar deta hai, validator chalta hi nahi
 
-    # ✅ FIX #3: Only admin can set status to approved/rejected
+    def validate(self, data):
+        request = self.context.get('request')
+        employee = data.get('employee') or getattr(self.instance, 'employee', None)
+        start_date = data.get('start_date') or getattr(self.instance, 'start_date', None)
+        end_date = data.get('end_date') or getattr(self.instance, 'end_date', None)
+
+        # NEW: non-admin sirf apni khud ki leave create/edit kar sake
+        if request and request.user.role != 'admin' and employee is not None:
+            if employee.user_id != request.user.id:
+                raise serializers.ValidationError(
+                    "You can only submit or edit leave requests for yourself."
+                )
+
+        if start_date and end_date and start_date > end_date:
+            raise serializers.ValidationError("start_date cannot be after end_date.")
+
+        if employee and start_date and end_date:
+            overlapping = Leave.objects.filter(
+                employee=employee,
+                start_date__lte=end_date,
+                end_date__gte=start_date,
+            ).exclude(status='rejected')
+            if self.instance:
+                overlapping = overlapping.exclude(id=self.instance.id)
+            if overlapping.exists():
+                raise serializers.ValidationError(
+                    f"{employee} already has a leave request overlapping these dates."
+                )
+
+        return data
+
     def validate_status(self, value):
         request = self.context.get('request')
-        if request and request.user.role != 'admin':
-            if value in ['approved', 'rejected']:
-                raise serializers.ValidationError(
-                    "Only admin can approve or reject leave requests."
-                )
+        if request and value in ['approved', 'rejected'] and request.user.role != 'admin':
+            raise serializers.ValidationError("Only admin can approve or reject leave requests.")
         return value
 
     def create(self, validated_data):
-        # ✅ Always set status to 'pending' on creation
+        # Naya leave request hamesha 'pending' se shuru ho, chahe kuch bhi bheja ho
         validated_data['status'] = 'pending'
         return super().create(validated_data)
-
 
 class PayrollSerializer(serializers.ModelSerializer):
     class Meta:
