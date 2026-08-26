@@ -1,11 +1,12 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import LibraryPermission
 from apps.users.models import Student, Teacher, Parent
 from .models import Book, BookIssue, BookIssueHistory
 from .serializers import BookSerializer, BookIssueSerializer, BookIssueHistorySerializer
 
 
-class BookViewSet(viewsets.ModelViewSet):
+class BookViewSet(TenantModelViewSet):
     queryset = Book.objects.all()
     serializer_class = BookSerializer
     permission_classes = [LibraryPermission]
@@ -27,7 +28,7 @@ class BookViewSet(viewsets.ModelViewSet):
         return Book.objects.none()
 
 
-class BookIssueViewSet(viewsets.ModelViewSet):
+class BookIssueViewSet(TenantModelViewSet):
     serializer_class = BookIssueSerializer
     permission_classes = [LibraryPermission]
 
@@ -55,7 +56,7 @@ class BookIssueViewSet(viewsets.ModelViewSet):
         return BookIssue.objects.none()
 
 
-class BookIssueHistoryViewSet(viewsets.ModelViewSet):
+class BookIssueHistoryViewSet(TenantModelViewSet):
     serializer_class = BookIssueHistorySerializer
     permission_classes = [LibraryPermission]
 

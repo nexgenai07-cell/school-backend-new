@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from apps.common.permissions import IsOwnerParentOrAdmin
@@ -7,7 +8,7 @@ from .models import Attendance, BehaviorLog
 from .serializers import AttendanceSerializer, BehaviorLogSerializer
 
 
-class AttendanceViewSet(viewsets.ModelViewSet):
+class AttendanceViewSet(TenantModelViewSet):
     serializer_class = AttendanceSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 
@@ -43,7 +44,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         if not student_id or not month:
             return Response({"error": "student_id and month are required"}, status=400)
         
-        # ✅ Security Check - Student ka data dekhne ka permission hai?
+        # âœ… Security Check - Student ka data dekhne ka permission hai?
         try:
             student = Student.objects.get(id=student_id)
             
@@ -87,7 +88,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
         })
 
 
-class BehaviorLogViewSet(viewsets.ModelViewSet):
+class BehaviorLogViewSet(TenantModelViewSet):
     serializer_class = BehaviorLogSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 

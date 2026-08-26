@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import ReadOnlyOrAdmin, AutomationPermission, IsOwnerParentOrAdmin
 from apps.users.models import Student, Teacher, Parent
 from .models import (
@@ -12,31 +13,31 @@ from .serializers import (
 )
 
 
-class SkillMappingViewSet(viewsets.ModelViewSet):
+class SkillMappingViewSet(TenantModelViewSet):
     queryset = SkillMapping.objects.all()
     serializer_class = SkillMappingSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
 
-class AutomationRuleViewSet(viewsets.ModelViewSet):
+class AutomationRuleViewSet(TenantModelViewSet):
     queryset = AutomationRule.objects.all()
     serializer_class = AutomationRuleSerializer
     permission_classes = [AutomationPermission]
 
 
-class AutomationLogViewSet(viewsets.ModelViewSet):
+class AutomationLogViewSet(TenantModelViewSet):
     queryset = AutomationLog.objects.all()
     serializer_class = AutomationLogSerializer
     permission_classes = [AutomationPermission]
 
 
-class AnalyticsSnapshotViewSet(viewsets.ModelViewSet):
+class AnalyticsSnapshotViewSet(TenantModelViewSet):
     queryset = AnalyticsSnapshot.objects.all()
     serializer_class = AnalyticsSnapshotSerializer
     permission_classes = [AutomationPermission]
 
 
-class PredictionViewSet(viewsets.ModelViewSet):
+class PredictionViewSet(TenantModelViewSet):
     serializer_class = PredictionSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 
@@ -64,7 +65,7 @@ class PredictionViewSet(viewsets.ModelViewSet):
         return Prediction.objects.none()
 
 
-class RecommendationViewSet(viewsets.ModelViewSet):
+class RecommendationViewSet(TenantModelViewSet):
     serializer_class = RecommendationSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 
@@ -92,7 +93,7 @@ class RecommendationViewSet(viewsets.ModelViewSet):
         return Recommendation.objects.none()
 
 
-class StudentGoalViewSet(viewsets.ModelViewSet):
+class StudentGoalViewSet(TenantModelViewSet):
     serializer_class = StudentGoalSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 
@@ -120,7 +121,7 @@ class StudentGoalViewSet(viewsets.ModelViewSet):
         return StudentGoal.objects.none()
 
 
-class StudentSkillViewSet(viewsets.ModelViewSet):
+class StudentSkillViewSet(TenantModelViewSet):
     serializer_class = StudentSkillSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 
@@ -148,7 +149,7 @@ class StudentSkillViewSet(viewsets.ModelViewSet):
         return StudentSkill.objects.none()
 
 
-class ParentEngagementViewSet(viewsets.ModelViewSet):
+class ParentEngagementViewSet(TenantModelViewSet):
     serializer_class = ParentEngagementSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 

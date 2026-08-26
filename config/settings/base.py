@@ -22,6 +22,7 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'corsheaders',
+    'apps.tenants',
 
     # Project apps
     'apps.common',
@@ -51,11 +52,16 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'apps.tenants.middleware.TenantMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+# Hybrid sharding: routes each school's queries to the database listed in
+# School.database_alias. Platform tables always stay on 'default'.
+DATABASE_ROUTERS = ['apps.tenants.router.TenantDatabaseRouter']
 
 TEMPLATES = [
     {

@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import ReadOnlyOrAdmin, HRPermission, LeavePermission
 from apps.users.models import Staff
 from .models import Department, Employee, Leave, Payroll, SalaryHistory, LeaveHistory
@@ -19,13 +20,13 @@ def is_hr_staff(user):
         return False
 
 
-class DepartmentViewSet(viewsets.ModelViewSet):
+class DepartmentViewSet(TenantModelViewSet):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
 
-class EmployeeViewSet(viewsets.ModelViewSet):
+class EmployeeViewSet(TenantModelViewSet):
     serializer_class = EmployeeSerializer
     permission_classes = [HRPermission]
 
@@ -46,7 +47,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         return Employee.objects.none()
 
 
-class LeaveViewSet(viewsets.ModelViewSet):
+class LeaveViewSet(TenantModelViewSet):
     serializer_class = LeaveSerializer
     permission_classes = [LeavePermission]
 
@@ -62,7 +63,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
         return Leave.objects.filter(employee__user=user)
 
 
-class PayrollViewSet(viewsets.ModelViewSet):
+class PayrollViewSet(TenantModelViewSet):
     serializer_class = PayrollSerializer
     permission_classes = [HRPermission]
 
@@ -78,7 +79,7 @@ class PayrollViewSet(viewsets.ModelViewSet):
         return Payroll.objects.filter(employee__user=user)
 
 
-class SalaryHistoryViewSet(viewsets.ModelViewSet):
+class SalaryHistoryViewSet(TenantModelViewSet):
     serializer_class = SalaryHistorySerializer
     permission_classes = [HRPermission]
 
@@ -94,7 +95,7 @@ class SalaryHistoryViewSet(viewsets.ModelViewSet):
         return SalaryHistory.objects.filter(employee__user=user)
 
 
-class LeaveHistoryViewSet(viewsets.ModelViewSet):
+class LeaveHistoryViewSet(TenantModelViewSet):
     serializer_class = LeaveHistorySerializer
     permission_classes = [HRPermission]
 

@@ -1,4 +1,5 @@
-from rest_framework import viewsets, generics, permissions
+﻿from rest_framework import viewsets, generics, permissions
+from apps.common.views import TenantModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from apps.common.permissions import (
@@ -17,13 +18,13 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(TenantModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
 
 
-class StudentViewSet(viewsets.ModelViewSet):
+class StudentViewSet(TenantModelViewSet):
     serializer_class = StudentSerializer
     permission_classes = [IsAdminOrTeacherOrParent]
 
@@ -46,14 +47,14 @@ class StudentViewSet(viewsets.ModelViewSet):
         """Get current student profile"""
         user = request.user
         
-        # ✅ Check if user is authenticated
+        # âœ… Check if user is authenticated
         if not user.is_authenticated:
             return Response(
                 {"error": "Authentication required"},
                 status=401
             )
         
-        # ✅ Only students can access
+        # âœ… Only students can access
         if user.role != 'student':
             return Response(
                 {"error": "Only students can access this endpoint"},
@@ -71,7 +72,7 @@ class StudentViewSet(viewsets.ModelViewSet):
             )
 
 
-class TeacherViewSet(viewsets.ModelViewSet):
+class TeacherViewSet(TenantModelViewSet):
     serializer_class = TeacherSerializer
     permission_classes = [IsAdminOrTeacherOrStudentOrParent]
 
@@ -110,7 +111,7 @@ class TeacherViewSet(viewsets.ModelViewSet):
             return Response({"error": "Teacher profile not found"}, status=404)
 
 
-class StaffViewSet(viewsets.ModelViewSet):
+class StaffViewSet(TenantModelViewSet):
     serializer_class = StaffSerializer
     permission_classes = [IsAdminOrTeacherOrParent]
 
@@ -139,7 +140,7 @@ class StaffViewSet(viewsets.ModelViewSet):
             return Response({"error": "Staff profile not found"}, status=404)
 
 
-class ParentViewSet(viewsets.ModelViewSet):
+class ParentViewSet(TenantModelViewSet):
     serializer_class = ParentSerializer
     permission_classes = [IsAdminOrTeacherOrParent]
 

@@ -3,6 +3,17 @@
 Production-level Django + DRF project — ALL 68 tables, models, serializers,
 views, urls complete across 17 apps.
 
+## Multi-tenancy
+
+All school-owned records are isolated by `School`. Existing API paths are
+unchanged; resolve a tenant through its configured custom domain or send the
+`X-Tenant-Slug` header (for example `X-Tenant-Slug: default-school`) with every
+API request, including login and registration. The migration creates a
+`Default School` and assigns existing records to it.
+
+Platform superusers manage schools at `/api/tenants/schools/`; authenticated
+users can inspect the resolved tenant at `/api/tenants/current/`.
+
 ## Setup
 ```bash
 python -m venv venv

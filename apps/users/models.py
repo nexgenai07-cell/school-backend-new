@@ -4,6 +4,14 @@ from django.db import models
 
 
 class UserManager(BaseUserManager):
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(is_deleted=False)
+        from apps.tenants.context import current_tenant
+        tenant = current_tenant.get()
+        if tenant is not None:
+            queryset = queryset.filter(school=tenant)
+        return queryset
+
     def create_user(self, email, name, password=None, role='student', **extra_fields):
         if not email:
             raise ValueError('Email is required')
@@ -15,6 +23,12 @@ class UserManager(BaseUserManager):
         else:
             extra_fields['is_staff'] = False
             extra_fields['is_superuser'] = False
+
+        from apps.tenants.context import current_tenant
+        extra_fields.setdefault('school', current_tenant.get())
+        # Platform superusers manage tenants and intentionally have no school.
+        if extra_fields['school'] is None and not extra_fields.get('is_superuser'):
+            raise ValueError('A school tenant is required to create a user')
 
         user = self.model(email=email, name=name, role=role, **extra_fields)
         user.set_password(password)
@@ -65,6 +79,10 @@ class Student(BaseModel):
     address = models.TextField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
     admission_date = models.DateField(null=True, blank=True)
+    # Feature-gated field ('student-blood-group'): only exposed via API for
+    # schools that have the feature enabled. Column exists for all schools
+    # (shared schema) but stays empty where the feature is off.
+    blood_group = models.CharField(max_length=5, blank=True)
 
     class Meta:
         db_table = 'students'

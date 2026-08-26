@@ -1,22 +1,23 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import ReadOnlyOrAdmin, CanteenPermission
 from .models import Category, MenuItem, OrderItem
 from .serializers import CategorySerializer, MenuItemSerializer, OrderItemSerializer
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(TenantModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [ReadOnlyOrAdmin]
 
 
-class MenuItemViewSet(viewsets.ModelViewSet):
+class MenuItemViewSet(TenantModelViewSet):
     queryset = MenuItem.objects.all()
     serializer_class = MenuItemSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
 
-class OrderItemViewSet(viewsets.ModelViewSet):
+class OrderItemViewSet(TenantModelViewSet):
     serializer_class = OrderItemSerializer
     permission_classes = [CanteenPermission]
 

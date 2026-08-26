@@ -1,11 +1,12 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import PTMPermission
 from apps.users.models import Student, Teacher, Parent
 from .models import PTM, PTMMeeting, PTMAttendee
 from .serializers import PTMSerializer, PTMMeetingSerializer, PTMAttendeeSerializer
 
 
-class PTMViewSet(viewsets.ModelViewSet):
+class PTMViewSet(TenantModelViewSet):
     serializer_class = PTMSerializer
     permission_classes = [PTMPermission]
 
@@ -33,7 +34,7 @@ class PTMViewSet(viewsets.ModelViewSet):
         return PTM.objects.none()
 
 
-class PTMMeetingViewSet(viewsets.ModelViewSet):
+class PTMMeetingViewSet(TenantModelViewSet):
     serializer_class = PTMMeetingSerializer
     permission_classes = [PTMPermission]
 
@@ -59,7 +60,7 @@ class PTMMeetingViewSet(viewsets.ModelViewSet):
         return PTMMeeting.objects.none()
 
 
-class PTMAttendeeViewSet(viewsets.ModelViewSet):
+class PTMAttendeeViewSet(TenantModelViewSet):
     serializer_class = PTMAttendeeSerializer
     permission_classes = [PTMPermission]
 

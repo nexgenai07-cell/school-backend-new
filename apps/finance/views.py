@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import ReadOnlyOrAdmin, FinancePermission
 from .models import FeeStructure, Expense, Fee, Payment, FeeHistory
 from .serializers import (
@@ -7,19 +8,19 @@ from .serializers import (
 )
 
 
-class FeeStructureViewSet(viewsets.ModelViewSet):
+class FeeStructureViewSet(TenantModelViewSet):
     queryset = FeeStructure.objects.all()
     serializer_class = FeeStructureSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
 
-class ExpenseViewSet(viewsets.ModelViewSet):
+class ExpenseViewSet(TenantModelViewSet):
     queryset = Expense.objects.all()
     serializer_class = ExpenseSerializer
     permission_classes = [FinancePermission]
 
 
-class FeeViewSet(viewsets.ModelViewSet):
+class FeeViewSet(TenantModelViewSet):
     serializer_class = FeeSerializer
     permission_classes = [FinancePermission]
 
@@ -34,7 +35,7 @@ class FeeViewSet(viewsets.ModelViewSet):
         return Fee.objects.none()
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(TenantModelViewSet):
     serializer_class = PaymentSerializer
     permission_classes = [FinancePermission]
 
@@ -49,7 +50,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
         return Payment.objects.none()
 
 
-class FeeHistoryViewSet(viewsets.ModelViewSet):
+class FeeHistoryViewSet(TenantModelViewSet):
     serializer_class = FeeHistorySerializer
     permission_classes = [FinancePermission]
 

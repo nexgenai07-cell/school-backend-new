@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import TransportPermission
 from apps.users.models import Student, Teacher, Parent
 from .models import Bus, Route, BusStop, BusStudent, TransportAttendance
@@ -8,25 +9,25 @@ from .serializers import (
 )
 
 
-class BusViewSet(viewsets.ModelViewSet):
+class BusViewSet(TenantModelViewSet):
     queryset = Bus.objects.all()
     serializer_class = BusSerializer
     permission_classes = [TransportPermission]
 
 
-class RouteViewSet(viewsets.ModelViewSet):
+class RouteViewSet(TenantModelViewSet):
     queryset = Route.objects.all()
     serializer_class = RouteSerializer
     permission_classes = [TransportPermission]
 
 
-class BusStopViewSet(viewsets.ModelViewSet):
+class BusStopViewSet(TenantModelViewSet):
     queryset = BusStop.objects.all()
     serializer_class = BusStopSerializer
     permission_classes = [TransportPermission]
 
 
-class BusStudentViewSet(viewsets.ModelViewSet):
+class BusStudentViewSet(TenantModelViewSet):
     serializer_class = BusStudentSerializer
     permission_classes = [TransportPermission]
 
@@ -54,7 +55,7 @@ class BusStudentViewSet(viewsets.ModelViewSet):
         return BusStudent.objects.none()
 
 
-class TransportAttendanceViewSet(viewsets.ModelViewSet):
+class TransportAttendanceViewSet(TenantModelViewSet):
     serializer_class = TransportAttendanceSerializer
     permission_classes = [TransportPermission]
 

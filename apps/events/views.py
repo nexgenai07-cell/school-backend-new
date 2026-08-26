@@ -1,17 +1,18 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import EventsPermission
 from .models import Event, EventParticipation
 from .serializers import EventSerializer, EventParticipationSerializer
 
 
-class EventViewSet(viewsets.ModelViewSet):
-    # ✅ FIX #2: Sab authenticated users ko sab events dikhein
+class EventViewSet(TenantModelViewSet):
+    # âœ… FIX #2: Sab authenticated users ko sab events dikhein
     queryset = Event.objects.all()
     serializer_class = EventSerializer
     permission_classes = [EventsPermission]
 
 
-class EventParticipationViewSet(viewsets.ModelViewSet):
+class EventParticipationViewSet(TenantModelViewSet):
     serializer_class = EventParticipationSerializer
     permission_classes = [EventsPermission]
 

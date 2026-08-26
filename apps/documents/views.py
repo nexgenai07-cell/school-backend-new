@@ -1,17 +1,18 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import ReadOnlyOrAdmin, DocumentsPermission
 from django.db.models import Q
 from .models import DocumentType, Document
 from .serializers import DocumentTypeSerializer, DocumentSerializer
 
 
-class DocumentTypeViewSet(viewsets.ModelViewSet):
+class DocumentTypeViewSet(TenantModelViewSet):
     queryset = DocumentType.objects.all()
     serializer_class = DocumentTypeSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
 
-class DocumentViewSet(viewsets.ModelViewSet):
+class DocumentViewSet(TenantModelViewSet):
     serializer_class = DocumentSerializer
     permission_classes = [DocumentsPermission]
 

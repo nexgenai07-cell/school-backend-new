@@ -1,11 +1,12 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import IsAssignedTeacherOrAdmin, IsOwnerParentOrAdmin
 from apps.users.models import Student, Teacher, Parent
 from .models import Assignment, Submission
 from .serializers import AssignmentSerializer, SubmissionSerializer
 
 
-class AssignmentViewSet(viewsets.ModelViewSet):
+class AssignmentViewSet(TenantModelViewSet):
     serializer_class = AssignmentSerializer
     permission_classes = [IsAssignedTeacherOrAdmin]
 
@@ -45,7 +46,7 @@ class AssignmentViewSet(viewsets.ModelViewSet):
         return Assignment.objects.none()
 
 
-class SubmissionViewSet(viewsets.ModelViewSet):
+class SubmissionViewSet(TenantModelViewSet):
     serializer_class = SubmissionSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 

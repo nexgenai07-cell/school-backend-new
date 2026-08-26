@@ -1,22 +1,23 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import SecurityPermission
 from .models import Visitor, AccessLog, EntryExitLog
 from .serializers import VisitorSerializer, AccessLogSerializer, EntryExitLogSerializer
 
 
-class VisitorViewSet(viewsets.ModelViewSet):
+class VisitorViewSet(TenantModelViewSet):
     queryset = Visitor.objects.all()
     serializer_class = VisitorSerializer
     permission_classes = [SecurityPermission]
 
 
-class AccessLogViewSet(viewsets.ModelViewSet):
+class AccessLogViewSet(TenantModelViewSet):
     queryset = AccessLog.objects.all()
     serializer_class = AccessLogSerializer
     permission_classes = [SecurityPermission]
 
 
-class EntryExitLogViewSet(viewsets.ModelViewSet):
+class EntryExitLogViewSet(TenantModelViewSet):
     serializer_class = EntryExitLogSerializer
     permission_classes = [SecurityPermission]
 

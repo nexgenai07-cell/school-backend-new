@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import ReadOnlyOrAdmin, IsAssignedTeacherOrAdmin
 from .models import Class, Section, Subject, Room, ClassSubject, Timetable
 from .serializers import (
@@ -7,7 +8,7 @@ from .serializers import (
 )
 
 
-class ClassViewSet(viewsets.ModelViewSet):
+class ClassViewSet(TenantModelViewSet):
     serializer_class = ClassSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
@@ -24,7 +25,7 @@ class ClassViewSet(viewsets.ModelViewSet):
         return Class.objects.none()
 
 
-class SectionViewSet(viewsets.ModelViewSet):
+class SectionViewSet(TenantModelViewSet):
     serializer_class = SectionSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
@@ -42,14 +43,14 @@ class SectionViewSet(viewsets.ModelViewSet):
         else:
             queryset = Section.objects.none()
 
-        # React frontend ke liye — Class select karne pe uski sections filter karne ka support
+        # React frontend ke liye â€” Class select karne pe uski sections filter karne ka support
         class_id = self.request.query_params.get('class_obj')
         if class_id:
             queryset = queryset.filter(class_obj_id=class_id)
 
         return queryset
 
-class SubjectViewSet(viewsets.ModelViewSet):
+class SubjectViewSet(TenantModelViewSet):
     serializer_class = SubjectSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
@@ -66,7 +67,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
         return Subject.objects.none()
 
 
-class RoomViewSet(viewsets.ModelViewSet):
+class RoomViewSet(TenantModelViewSet):
     serializer_class = RoomSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
@@ -82,7 +83,7 @@ class RoomViewSet(viewsets.ModelViewSet):
             return Room.objects.filter(timetable_slots__class_obj__students__parent__user=user).distinct()
         return Room.objects.none()
 
-class ClassSubjectViewSet(viewsets.ModelViewSet):
+class ClassSubjectViewSet(TenantModelViewSet):
     serializer_class = ClassSubjectSerializer
     permission_classes = [IsAssignedTeacherOrAdmin]
 
@@ -99,7 +100,7 @@ class ClassSubjectViewSet(viewsets.ModelViewSet):
         return ClassSubject.objects.none()
 
 
-class TimetableViewSet(viewsets.ModelViewSet):
+class TimetableViewSet(TenantModelViewSet):
     serializer_class = TimetableSerializer
     permission_classes = [IsAssignedTeacherOrAdmin]
 

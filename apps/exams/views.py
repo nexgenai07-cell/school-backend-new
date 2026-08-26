@@ -1,4 +1,5 @@
-from rest_framework import viewsets
+﻿from rest_framework import viewsets
+from apps.common.views import TenantModelViewSet
 from apps.common.permissions import ReadOnlyOrAdmin, IsAssignedTeacherOrAdmin, IsOwnerParentOrAdmin
 from apps.users.models import Student, Teacher, Parent
 from .models import GradeScale, Exam, Question, StudentAnswer, Result, AIAutoChecking
@@ -8,13 +9,13 @@ from .serializers import (
 )
 
 
-class GradeScaleViewSet(viewsets.ModelViewSet):
+class GradeScaleViewSet(TenantModelViewSet):
     queryset = GradeScale.objects.all()
     serializer_class = GradeScaleSerializer
     permission_classes = [ReadOnlyOrAdmin]
 
 
-class ExamViewSet(viewsets.ModelViewSet):
+class ExamViewSet(TenantModelViewSet):
     serializer_class = ExamSerializer
     permission_classes = [IsAssignedTeacherOrAdmin]
 
@@ -40,7 +41,7 @@ class ExamViewSet(viewsets.ModelViewSet):
         return Exam.objects.none()
 
 
-class QuestionViewSet(viewsets.ModelViewSet):
+class QuestionViewSet(TenantModelViewSet):
     serializer_class = QuestionSerializer
     permission_classes = [IsAssignedTeacherOrAdmin]
 
@@ -56,7 +57,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
             return Question.objects.filter(exam__teacher__user=user)
         
         # Student -> apni class ke exams ke questions (only after exam date)
-        # ⚠️ Security: Students shouldn't see questions before exam
+        # âš ï¸ Security: Students shouldn't see questions before exam
         if user.role == 'student':
             from django.utils import timezone
             return Question.objects.filter(
@@ -75,7 +76,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
         return Question.objects.none()
 
 
-class StudentAnswerViewSet(viewsets.ModelViewSet):
+class StudentAnswerViewSet(TenantModelViewSet):
     serializer_class = StudentAnswerSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 
@@ -103,7 +104,7 @@ class StudentAnswerViewSet(viewsets.ModelViewSet):
         return StudentAnswer.objects.none()
 
 
-class ResultViewSet(viewsets.ModelViewSet):
+class ResultViewSet(TenantModelViewSet):
     serializer_class = ResultSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 
@@ -129,7 +130,7 @@ class ResultViewSet(viewsets.ModelViewSet):
         return Result.objects.none()
 
 
-class AIAutoCheckingViewSet(viewsets.ModelViewSet):
+class AIAutoCheckingViewSet(TenantModelViewSet):
     serializer_class = AIAutoCheckingSerializer
     permission_classes = [IsOwnerParentOrAdmin]
 

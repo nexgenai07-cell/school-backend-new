@@ -25,11 +25,29 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
 
+# Fields hidden unless the requesting tenant has the matching feature enabled.
+# Key: serializer field name -> Value: feature key in the Feature registry.
+FEATURE_GATED_FIELDS = {
+    'blood_group': 'student-blood-group',
+}
+
+
 class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Feature gating: drop fields the current school has not purchased.
+        # The DB column still exists (shared schema) — only API visibility
+        # changes, so no migration is needed to toggle a field per school.
+        request = self.context.get('request')
+        tenant = getattr(request, 'tenant', None)
+        for field_name, feature_key in FEATURE_GATED_FIELDS.items():
+            if tenant is None or not tenant.has_feature(feature_key):
+                self.fields.pop(field_name, None)
 
     def validate(self, data):
         class_obj = data.get('class_obj') or getattr(self.instance, 'class_obj', None)
