@@ -3,6 +3,10 @@ from .models import Assignment, Submission
 
 
 class AssignmentSerializer(serializers.ModelSerializer):
+    class_name = serializers.CharField(source='class_obj.name', read_only=True)
+    subject_name = serializers.CharField(source='subject.name', read_only=True)
+    teacher_name = serializers.CharField(source='teacher.user.name', read_only=True, default=None)
+
     class Meta:
         model = Assignment
         fields = '__all__'
@@ -26,6 +30,9 @@ class AssignmentSerializer(serializers.ModelSerializer):
         return data
 
 class SubmissionSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    assignment_title = serializers.CharField(source='assignment.title', read_only=True)
+
     class Meta:
         model = Submission
         fields = '__all__'

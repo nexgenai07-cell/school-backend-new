@@ -3,6 +3,10 @@ from .models import Attendance, BehaviorLog
 
 
 class AttendanceSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    teacher_name = serializers.CharField(source='teacher.user.name', read_only=True, default=None)
+    marked_by_name = serializers.CharField(source='marked_by.user.name', read_only=True, default=None)
+
     class Meta:
         model = Attendance
         fields = '__all__'
@@ -20,6 +24,9 @@ class AttendanceSerializer(serializers.ModelSerializer):
 
 
 class BehaviorLogSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    teacher_name = serializers.CharField(source='teacher.user.name', read_only=True, default=None)
+
     class Meta:
         model = BehaviorLog
         fields = '__all__'

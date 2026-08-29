@@ -3,6 +3,8 @@ from .models import Visitor, AccessLog, EntryExitLog
 
 
 class VisitorSerializer(serializers.ModelSerializer):
+    approved_by_name = serializers.CharField(source='approved_by.user.name', read_only=True, default=None)
+
     class Meta:
         model = Visitor
         fields = '__all__'
@@ -10,6 +12,8 @@ class VisitorSerializer(serializers.ModelSerializer):
 
 
 class AccessLogSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.name', read_only=True)
+
     class Meta:
         model = AccessLog
         fields = '__all__'
@@ -17,6 +21,8 @@ class AccessLogSerializer(serializers.ModelSerializer):
 
 
 class EntryExitLogSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+
     class Meta:
         model = EntryExitLog
         fields = '__all__'

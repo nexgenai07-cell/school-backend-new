@@ -10,6 +10,10 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
 
 
 class DocumentSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    doc_type_name = serializers.CharField(source='doc_type.name', read_only=True, default=None)
+    uploaded_by_name = serializers.CharField(source='uploaded_by.name', read_only=True, default=None)
+
     class Meta:
         model = Document
         fields = '__all__'

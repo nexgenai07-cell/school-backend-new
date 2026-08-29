@@ -3,6 +3,8 @@ from .models import PTM, PTMMeeting, PTMAttendee
 
 
 class PTMSerializer(serializers.ModelSerializer):
+    class_name = serializers.CharField(source='class_obj.name', read_only=True)
+
     class Meta:
         model = PTM
         fields = '__all__'
@@ -10,6 +12,10 @@ class PTMSerializer(serializers.ModelSerializer):
 
 
 class PTMMeetingSerializer(serializers.ModelSerializer):
+    ptm_name = serializers.CharField(source='ptm.name', read_only=True)
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    teacher_name = serializers.CharField(source='teacher.user.name', read_only=True)
+
     class Meta:
         model = PTMMeeting
         fields = '__all__'
@@ -75,7 +81,13 @@ class PTMMeetingSerializer(serializers.ModelSerializer):
 
 
 class PTMAttendeeSerializer(serializers.ModelSerializer):
+    parent_name = serializers.CharField(source='parent.user.name', read_only=True)
+    meeting_label = serializers.SerializerMethodField()
+
     class Meta:
         model = PTMAttendee
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
+
+    def get_meeting_label(self, obj):
+        return f"{obj.ptm_meeting.ptm.name} - {obj.ptm_meeting.student.user.name}"

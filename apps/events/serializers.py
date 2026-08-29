@@ -3,6 +3,8 @@ from .models import Event, EventParticipation
 
 
 class EventSerializer(serializers.ModelSerializer):
+    organizer_name = serializers.CharField(source='organizer.user.name', read_only=True, default=None)
+
     class Meta:
         model = Event
         fields = '__all__'
@@ -10,6 +12,9 @@ class EventSerializer(serializers.ModelSerializer):
 
 
 class EventParticipationSerializer(serializers.ModelSerializer):
+    event_name = serializers.CharField(source='event.name', read_only=True)
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+
     class Meta:
         model = EventParticipation
         fields = '__all__'

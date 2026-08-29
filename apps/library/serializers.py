@@ -3,6 +3,8 @@ from .models import Book, BookIssue, BookIssueHistory
 
 
 class BookSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True, default=None)
+
     class Meta:
         model = Book
         fields = '__all__'
@@ -10,6 +12,9 @@ class BookSerializer(serializers.ModelSerializer):
 
 
 class BookIssueSerializer(serializers.ModelSerializer):
+    book_title = serializers.CharField(source='book.title', read_only=True)
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+
     class Meta:
         model = BookIssue
         fields = '__all__'
@@ -67,6 +72,10 @@ class BookIssueSerializer(serializers.ModelSerializer):
 
 
 class BookIssueHistorySerializer(serializers.ModelSerializer):
+    book_title = serializers.CharField(source='book_issue.book.title', read_only=True)
+    student_name = serializers.CharField(source='book_issue.student.user.name', read_only=True)
+    changed_by_name = serializers.CharField(source='changed_by.name', read_only=True, default=None)
+
     class Meta:
         model = BookIssueHistory
         fields = '__all__'

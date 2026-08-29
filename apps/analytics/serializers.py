@@ -20,6 +20,8 @@ class AutomationRuleSerializer(serializers.ModelSerializer):
 
 
 class AutomationLogSerializer(serializers.ModelSerializer):
+    rule_name = serializers.CharField(source='rule.rule_name', read_only=True)
+
     class Meta:
         model = AutomationLog
         fields = '__all__'
@@ -34,6 +36,8 @@ class AnalyticsSnapshotSerializer(serializers.ModelSerializer):
 
 
 class PredictionSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+
     class Meta:
         model = Prediction
         fields = '__all__'
@@ -41,6 +45,8 @@ class PredictionSerializer(serializers.ModelSerializer):
 
 
 class RecommendationSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+
     class Meta:
         model = Recommendation
         fields = '__all__'
@@ -48,6 +54,8 @@ class RecommendationSerializer(serializers.ModelSerializer):
 
 
 class StudentGoalSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+
     class Meta:
         model = StudentGoal
         fields = '__all__'
@@ -55,6 +63,9 @@ class StudentGoalSerializer(serializers.ModelSerializer):
 
 
 class StudentSkillSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    skill_name = serializers.CharField(source='skill.name', read_only=True)
+
     class Meta:
         model = StudentSkill
         fields = '__all__'
@@ -62,6 +73,8 @@ class StudentSkillSerializer(serializers.ModelSerializer):
 
 
 class ParentEngagementSerializer(serializers.ModelSerializer):
+    parent_name = serializers.CharField(source='parent.user.name', read_only=True)
+
     class Meta:
         model = ParentEngagement
         fields = '__all__'

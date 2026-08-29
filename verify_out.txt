@@ -1,0 +1,2 @@
+default: 80 tables
+vps_shard_1: 80 tables

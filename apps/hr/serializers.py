@@ -10,6 +10,9 @@ class DepartmentSerializer(serializers.ModelSerializer):
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    department_name = serializers.CharField(source='department.name', read_only=True, default=None)
+
     class Meta:
         model = Employee
         fields = '__all__'
@@ -17,6 +20,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
 
 
 class LeaveSerializer(serializers.ModelSerializer):
+    employee_name = serializers.CharField(source='employee.user.name', read_only=True)
+
     class Meta:
         model = Leave
         fields = '__all__'
@@ -67,11 +72,16 @@ class LeaveSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class PayrollSerializer(serializers.ModelSerializer):
+    employee_name = serializers.CharField(source='employee.user.name', read_only=True)
+
     class Meta:
         model = Payroll
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted', 'net_salary']
 class SalaryHistorySerializer(serializers.ModelSerializer):
+    employee_name = serializers.CharField(source='employee.user.name', read_only=True)
+    changed_by_name = serializers.CharField(source='changed_by.name', read_only=True, default=None)
+
     class Meta:
         model = SalaryHistory
         fields = '__all__'
@@ -79,6 +89,9 @@ class SalaryHistorySerializer(serializers.ModelSerializer):
 
 
 class LeaveHistorySerializer(serializers.ModelSerializer):
+    employee_name = serializers.CharField(source='leave.employee.user.name', read_only=True)
+    changed_by_name = serializers.CharField(source='changed_by.name', read_only=True, default=None)
+
     class Meta:
         model = LeaveHistory
         fields = '__all__'

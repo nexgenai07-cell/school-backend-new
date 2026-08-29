@@ -13,6 +13,10 @@ class GradeScaleSerializer(serializers.ModelSerializer):
 
 
 class ExamSerializer(serializers.ModelSerializer):
+    class_name = serializers.CharField(source='class_obj.name', read_only=True)
+    subject_name = serializers.CharField(source='subject.name', read_only=True)
+    teacher_name = serializers.CharField(source='teacher.user.name', read_only=True, default=None)
+
     class Meta:
         model = Exam
         fields = '__all__'
@@ -52,6 +56,7 @@ class QuestionSerializer(serializers.ModelSerializer):
     # ✅ Add these two fields
     class_name = serializers.SerializerMethodField()
     subject_name = serializers.SerializerMethodField()
+    exam_name = serializers.CharField(source='exam.name', read_only=True)
 
     class Meta:
         model = Question
@@ -88,6 +93,9 @@ class QuestionSerializer(serializers.ModelSerializer):
 
 
 class StudentAnswerSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    exam_name = serializers.CharField(source='exam.name', read_only=True)
+
     class Meta:
         model = StudentAnswer
         fields = '__all__'
@@ -105,6 +113,9 @@ class StudentAnswerSerializer(serializers.ModelSerializer):
         return data
 
 class ResultSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    exam_name = serializers.CharField(source='exam.name', read_only=True)
+
     class Meta:
         model = Result
         fields = '__all__'
@@ -123,6 +134,10 @@ class ResultSerializer(serializers.ModelSerializer):
 
 
 class AIAutoCheckingSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    exam_name = serializers.CharField(source='exam.name', read_only=True)
+    reviewed_by_teacher_name = serializers.CharField(source='reviewed_by_teacher.user.name', read_only=True, default=None)
+
     class Meta:
         model = AIAutoChecking
         fields = '__all__'

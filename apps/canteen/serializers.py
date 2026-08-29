@@ -10,6 +10,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class MenuItemSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True, default=None)
+
     class Meta:
         model = MenuItem
         fields = '__all__'
@@ -17,6 +19,9 @@ class MenuItemSerializer(serializers.ModelSerializer):
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    item_name = serializers.CharField(source='menu_item.name', read_only=True)
+
     class Meta:
         model = OrderItem
         fields = '__all__'

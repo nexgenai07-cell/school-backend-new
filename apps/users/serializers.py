@@ -1,4 +1,4 @@
-from rest_framework import serializers
+﻿from rest_framework import serializers
 from .models import User, Student, Teacher, Staff, Parent
 
 
@@ -33,6 +33,13 @@ FEATURE_GATED_FIELDS = {
 
 
 class StudentSerializer(serializers.ModelSerializer):
+    # Read-only display names resolved from related rows (no schema change).
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    class_name = serializers.CharField(source='class_obj.name', read_only=True)
+    parent_name = serializers.CharField(
+        source='parent.user.name', read_only=True, default=None
+    )
+
     class Meta:
         model = Student
         fields = '__all__'
@@ -41,7 +48,7 @@ class StudentSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Feature gating: drop fields the current school has not purchased.
-        # The DB column still exists (shared schema) — only API visibility
+        # The DB column still exists (shared schema) -- only API visibility
         # changes, so no migration is needed to toggle a field per school.
         request = self.context.get('request')
         tenant = getattr(request, 'tenant', None)
@@ -63,6 +70,11 @@ class StudentSerializer(serializers.ModelSerializer):
         return data
 
 class TeacherSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    employee_name = serializers.CharField(
+        source='employee.user.name', read_only=True, default=None
+    )
+
     class Meta:
         model = Teacher
         fields = '__all__'
@@ -70,6 +82,11 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 
 class StaffSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.name', read_only=True)
+    employee_name = serializers.CharField(
+        source='employee.user.name', read_only=True, default=None
+    )
+
     class Meta:
         model = Staff
         fields = '__all__'
@@ -77,6 +94,8 @@ class StaffSerializer(serializers.ModelSerializer):
 
 
 class ParentSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.name', read_only=True)
+
     class Meta:
         model = Parent
         fields = '__all__'

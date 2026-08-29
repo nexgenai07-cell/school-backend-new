@@ -3,6 +3,8 @@ from .models import FeeStructure, Expense, Fee, Payment, FeeHistory
 
 
 class FeeStructureSerializer(serializers.ModelSerializer):
+    class_name = serializers.CharField(source='class_obj.name', read_only=True)
+
     class Meta:
         model = FeeStructure
         fields = '__all__'
@@ -10,6 +12,8 @@ class FeeStructureSerializer(serializers.ModelSerializer):
 
 
 class ExpenseSerializer(serializers.ModelSerializer):
+    paid_by_name = serializers.CharField(source='paid_by.name', read_only=True, default=None)
+
     class Meta:
         model = Expense
         fields = '__all__'
@@ -17,6 +21,9 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 
 class FeeSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    fee_structure_title = serializers.CharField(source='fee_structure.title', read_only=True)
+
     class Meta:
         model = Fee
         fields = '__all__'
@@ -24,6 +31,9 @@ class FeeSerializer(serializers.ModelSerializer):
 
 
 class PaymentSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='fee.student.user.name', read_only=True)
+    fee_title = serializers.CharField(source='fee.fee_structure.title', read_only=True)
+
     class Meta:
         model = Payment
         fields = '__all__'
@@ -43,6 +53,9 @@ class PaymentSerializer(serializers.ModelSerializer):
         return data
 
 class FeeHistorySerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='fee.student.user.name', read_only=True)
+    changed_by_name = serializers.CharField(source='changed_by.name', read_only=True, default=None)
+
     class Meta:
         model = FeeHistory
         fields = '__all__'

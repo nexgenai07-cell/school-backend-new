@@ -17,6 +17,8 @@ class RouteSerializer(serializers.ModelSerializer):
 
 
 class BusStopSerializer(serializers.ModelSerializer):
+    route_name = serializers.CharField(source='route.name', read_only=True)
+
     class Meta:
         model = BusStop
         fields = '__all__'
@@ -24,6 +26,11 @@ class BusStopSerializer(serializers.ModelSerializer):
 
 
 class BusStudentSerializer(serializers.ModelSerializer):
+    bus_number = serializers.CharField(source='bus.bus_no', read_only=True)
+    student_name = serializers.CharField(source='student.user.name', read_only=True)
+    pickup_stop_name = serializers.CharField(source='pickup_stop.name', read_only=True, default=None)
+    drop_stop_name = serializers.CharField(source='drop_stop.name', read_only=True, default=None)
+
     class Meta:
         model = BusStudent
         fields = '__all__'
@@ -51,6 +58,9 @@ class BusStudentSerializer(serializers.ModelSerializer):
 
         return data
 class TransportAttendanceSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='bus_student.student.user.name', read_only=True)
+    bus_number = serializers.CharField(source='bus_student.bus.bus_no', read_only=True)
+
     class Meta:
         model = TransportAttendance
         fields = '__all__'
