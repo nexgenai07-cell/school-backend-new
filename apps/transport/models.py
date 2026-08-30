@@ -1,16 +1,21 @@
 from apps.common.models import BaseModel
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 class Bus(BaseModel):
     STATUS_CHOICES = [('active', 'Active'), ('inactive', 'Inactive')]
 
-    bus_no = models.CharField(max_length=20, unique=True)
-    capacity = models.IntegerField()
+    bus_no = models.CharField(max_length=20)
+    capacity = models.IntegerField(validators=[MinValueValidator(1)])
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
 
     class Meta:
         db_table = 'buses'
+        # Per-school unique: School A and School B can each have "BUS-1".
+        constraints = [
+            models.UniqueConstraint(fields=['school', 'bus_no'], name='uniq_bus_school_no'),
+        ]
 
     def __str__(self):
         return self.bus_no
@@ -24,6 +29,7 @@ class Route(BaseModel):
 
     class Meta:
         db_table = 'routes'
+        unique_together = ['school', 'name']
 
     def __str__(self):
         return self.name
@@ -37,6 +43,8 @@ class BusStop(BaseModel):
     class Meta:
         db_table = 'bus_stops'
         ordering = ['stop_order']
+        # Same route cannot have two stops with the same name.
+        unique_together = ['route', 'name']
 
     def __str__(self):
         return f"{self.route.name} - {self.name}"
@@ -46,31 +54,8 @@ class BusStop(BaseModel):
 
 
 class BusStudent(BaseModel):
-    bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name='bus_students')
-    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='bus_assignments')
-    pickup_stop = models.ForeignKey(BusStop, on_delete=models.SET_NULL, null=True, related_name='pickups')
-    drop_stop = models.ForeignKey(BusStop, on_delete=models.SET_NULL, null=True, related_name='drops')
-
-    class Meta:
-        db_table = 'bus_students'
-        # ✅ Optional: Database level unique constraint
-        unique_together = ['student']  # Ek student sirf ek bus
-
-    def __str__(self):
-        return f"{self.student} - {self.bus.bus_no}"
-    bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name='bus_students')
-    student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='bus_assignments')
-    pickup_stop = models.ForeignKey(BusStop, on_delete=models.SET_NULL, null=True, related_name='pickups')
-    drop_stop = models.ForeignKey(BusStop, on_delete=models.SET_NULL, null=True, related_name='drops')
-
-    class Meta:
-        db_table = 'bus_students'
-        # ✅ Optional: Database level unique constraint
-        unique_together = ['student']  # Ek student sirf ek bus
-
-    def __str__(self):
-        return f"{self.student} - {self.bus.bus_no}"
     """Bridges buses <-> students (M:N) with pickup & drop stop references."""
+
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name='bus_students')
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='bus_assignments')
     pickup_stop = models.ForeignKey(BusStop, on_delete=models.SET_NULL, null=True, related_name='pickups')
@@ -78,6 +63,8 @@ class BusStudent(BaseModel):
 
     class Meta:
         db_table = 'bus_students'
+        # DB-level: a student can only be assigned to one bus.
+        unique_together = ['student']
 
     def clean(self):
         if self.bus_id:
@@ -88,9 +75,13 @@ class BusStudent(BaseModel):
         if self.student_id:
             duplicate = BusStudent.objects.filter(student_id=self.student_id).exclude(pk=self.pk)
             if duplicate.exists():
-                raise DjangoValidationError(
-                    f"{self.student} is already assigned to a bus."
-                )
+                raise DjangoValidationError(f"{self.student} is already assigned to a bus.")
+
+        if self.pickup_stop_id and self.drop_stop_id:
+            if self.pickup_stop_id == self.drop_stop_id:
+                raise DjangoValidationError("Pickup and drop stops cannot be the same stop.")
+            if self.pickup_stop.route_id != self.drop_stop.route_id:
+                raise DjangoValidationError("Pickup and drop stops must belong to the same route.")
 
     def save(self, *args, **kwargs):
         self.full_clean()

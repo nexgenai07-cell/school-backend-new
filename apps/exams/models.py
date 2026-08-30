@@ -1,4 +1,6 @@
 from apps.common.models import BaseModel
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -10,6 +12,28 @@ class GradeScale(BaseModel):
 
     class Meta:
         db_table = 'grade_scale'
+        # NOTE: 'grade' stays globally unique because Result.grade references it
+        # via to_field='grade' (Django E311 requirement). Grade labels are treated
+        # as shared/standardized across the platform.
+
+    def clean(self):
+        if self.min_percentage is not None and self.max_percentage is not None:
+            if self.min_percentage < 0 or self.max_percentage > 100:
+                raise DjangoValidationError("Grade percentages must be within 0-100.")
+            if self.min_percentage >= self.max_percentage:
+                raise DjangoValidationError("min_percentage must be less than max_percentage.")
+            overlaps = GradeScale.objects.filter(
+                min_percentage__lt=self.max_percentage,
+                max_percentage__gt=self.min_percentage,
+            )
+            if self.pk:
+                overlaps = overlaps.exclude(pk=self.pk)
+            if overlaps.exists():
+                raise DjangoValidationError("Grade scale ranges cannot overlap.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.grade
@@ -60,10 +84,12 @@ class StudentAnswer(BaseModel):
     answer_text = models.TextField(blank=True)
     selected_option = models.CharField(max_length=255, blank=True, help_text="For MCQ")
     is_correct = models.BooleanField(null=True, blank=True, help_text="AI checked")
-    marks_awarded = models.IntegerField(null=True, blank=True)
+    marks_awarded = models.IntegerField(null=True, blank=True, validators=[MinValueValidator(0)])
 
     class Meta:
         db_table = 'student_answers'
+        # One student can answer a given question only once per exam.
+        unique_together = ['exam', 'student', 'question']
 
     def __str__(self):
         return f"{self.student} - Q{self.question_id}"
@@ -72,13 +98,15 @@ class StudentAnswer(BaseModel):
 class Result(BaseModel):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='results')
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='results')
-    marks_obtained = models.IntegerField()
+    marks_obtained = models.IntegerField(validators=[MinValueValidator(0)])
     percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True)
     grade = models.ForeignKey(GradeScale, on_delete=models.SET_NULL, null=True, blank=True, to_field='grade', related_name='results')
     gpa = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True)
 
     class Meta:
         db_table = 'results'
+        # One student can have only one result per exam.
+        unique_together = ['exam', 'student']
 
     def save(self, *args, **kwargs):
         if self.exam.total_marks:

@@ -11,6 +11,7 @@ ALLOWED_HOSTS = [
     # School subdomains (schoola/schoolb/schoolc.nxgenai.pro) resolve their
     # tenant from the Host header, so they must be accepted here.
     ".nxgenai.pro",
+    
 ]
 
 CSRF_TRUSTED_ORIGINS = [

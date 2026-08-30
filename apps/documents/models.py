@@ -25,6 +25,8 @@ class Document(BaseModel):
 
     class Meta:
         db_table = 'documents'
+        # One document of a given type per user.
+        unique_together = ['user', 'doc_type']
 
     def __str__(self):
         return f"{self.user} - {self.doc_type}"

@@ -1,18 +1,28 @@
 from apps.common.models import BaseModel
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
 class Book(BaseModel):
     title = models.CharField(max_length=200)
     author = models.CharField(max_length=150, blank=True)
-    isbn = models.CharField(max_length=30, unique=True)
+    isbn = models.CharField(max_length=30)
     category = models.ForeignKey('canteen.Category', on_delete=models.SET_NULL, null=True, related_name='books')
     description = models.TextField(blank=True)
-    total_copies = models.IntegerField(default=0)
-    available_copies = models.IntegerField(default=0)
+    total_copies = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    available_copies = models.IntegerField(default=0, validators=[MinValueValidator(0)])
 
     class Meta:
         db_table = 'books'
+        # Two schools can legitimately own the same book (same ISBN).
+        constraints = [
+            models.UniqueConstraint(fields=['school', 'isbn'], name='uniq_book_school_isbn'),
+        ]
+
+    def clean(self):
+        if self.available_copies > self.total_copies:
+            raise DjangoValidationError("available_copies cannot exceed total_copies.")
 
     def __str__(self):
         return self.title

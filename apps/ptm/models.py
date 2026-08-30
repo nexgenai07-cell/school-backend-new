@@ -11,6 +11,8 @@ class PTM(BaseModel):
 
     class Meta:
         db_table = 'ptm'
+        # Same class cannot have two PTM events with the same name.
+        unique_together = ['class_obj', 'name']
 
     def __str__(self):
         return self.name

@@ -44,6 +44,8 @@ class EntryExitLog(BaseModel):
 
     class Meta:
         db_table = 'entry_exit_logs'
+        # DB-level: the same student cannot have two entries at the exact same time.
+        unique_together = ['student', 'entry_time']
 
     def clean(self):
         if self.student_id and self.entry_time:

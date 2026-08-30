@@ -1,4 +1,5 @@
 from apps.common.models import BaseModel
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -7,12 +8,14 @@ class FeeStructure(BaseModel):
 
     class_obj = models.ForeignKey('academics.Class', on_delete=models.CASCADE, related_name='fee_structures')
     title = models.CharField(max_length=150)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES)
     description = models.TextField(blank=True)
 
     class Meta:
         db_table = 'fee_structures'
+        # Same class cannot have two fee structures with the same title.
+        unique_together = ['class_obj', 'title']
 
     def __str__(self):
         return f"{self.class_obj.name} - {self.title}"
@@ -23,7 +26,7 @@ class Expense(BaseModel):
 
     category = models.CharField(max_length=100)
     description = models.TextField(blank=True)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     date = models.DateField()
     paid_by = models.ForeignKey('users.User', on_delete=models.SET_NULL, null=True, related_name='expenses_paid')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
@@ -40,12 +43,14 @@ class Fee(BaseModel):
 
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='fees')
     fee_structure = models.ForeignKey(FeeStructure, on_delete=models.CASCADE, related_name='fees')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     due_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
 
     class Meta:
         db_table = 'fees'
+        # Prevent double-billing: one fee record per student per structure.
+        unique_together = ['student', 'fee_structure']
 
     def __str__(self):
         return f"{self.student} - {self.fee_structure.title}"
@@ -55,7 +60,7 @@ class Payment(BaseModel):
     PAYMENT_METHOD_CHOICES = [('cash', 'Cash'), ('bank', 'Bank'), ('online', 'Online')]
 
     fee = models.ForeignKey(Fee, on_delete=models.CASCADE, related_name='payments')
-    amount_paid = models.DecimalField(max_digits=12, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
     payment_date = models.DateField()
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
     transaction_id = models.CharField(max_length=100, blank=True)
@@ -63,6 +68,14 @@ class Payment(BaseModel):
 
     class Meta:
         db_table = 'payments'
+        constraints = [
+            # Same external transaction cannot be recorded twice.
+            models.UniqueConstraint(
+                fields=['transaction_id'],
+                condition=~models.Q(transaction_id=''),
+                name='uniq_payment_transaction',
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         from django.core.exceptions import ValidationError

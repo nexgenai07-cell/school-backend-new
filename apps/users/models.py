@@ -1,5 +1,6 @@
 from apps.common.models import BaseModel
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 
 
@@ -73,7 +74,7 @@ class Student(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='student_profile')
     class_obj = models.ForeignKey('academics.Class', on_delete=models.CASCADE, related_name='students')
     parent = models.ForeignKey('users.Parent', on_delete=models.SET_NULL, null=True, blank=True, related_name='children')
-    admission_no = models.CharField(max_length=50, unique=True)
+    admission_no = models.CharField(max_length=50)
     dob = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
     address = models.TextField(blank=True)
@@ -86,6 +87,18 @@ class Student(BaseModel):
 
     class Meta:
         db_table = 'students'
+        # Per-school unique: School A and School B can each have admission "2024-001".
+        constraints = [
+            models.UniqueConstraint(fields=['school', 'admission_no'], name='uniq_student_school_admission'),
+        ]
+
+    def clean(self):
+        if self.user_id and self.user.role != 'student':
+            raise DjangoValidationError("Linked user role must be 'student'.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.user.name} ({self.admission_no})"
@@ -106,6 +119,14 @@ class Teacher(BaseModel):
     class Meta:
         db_table = 'teachers'
 
+    def clean(self):
+        if self.user_id and self.user.role != 'teacher':
+            raise DjangoValidationError("Linked user role must be 'teacher'.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.user.name
 
@@ -124,6 +145,14 @@ class Staff(BaseModel):
     class Meta:
         db_table = 'staff'
 
+    def clean(self):
+        if self.user_id and self.user.role != 'staff':
+            raise DjangoValidationError("Linked user role must be 'staff'.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.user.name
 
@@ -136,6 +165,14 @@ class Parent(BaseModel):
 
     class Meta:
         db_table = 'parents'
+
+    def clean(self):
+        if self.user_id and self.user.role != 'parent':
+            raise DjangoValidationError("Linked user role must be 'parent'.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.user.name

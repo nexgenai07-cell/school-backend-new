@@ -1,4 +1,5 @@
 from apps.common.models import BaseModel
+from django.core.validators import MinValueValidator
 from django.db import models
 
 
@@ -8,6 +9,7 @@ class Category(BaseModel):
 
     class Meta:
         db_table = 'categories'
+        unique_together = ['school', 'name']
 
     def __str__(self):
         return self.name
@@ -15,12 +17,13 @@ class Category(BaseModel):
 
 class MenuItem(BaseModel):
     name = models.CharField(max_length=150)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='menu_items')
     is_available = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'menu_items'
+        unique_together = ['school', 'name']
 
     def __str__(self):
         return self.name
@@ -34,8 +37,8 @@ class OrderItem(BaseModel):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='placed')
     menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE, related_name='order_items')
-    quantity = models.IntegerField(default=1)
-    price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Price at time of order")
+    quantity = models.IntegerField(default=1, validators=[MinValueValidator(1)])
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)], help_text="Price at time of order")
 
     class Meta:
         db_table = 'order_items'

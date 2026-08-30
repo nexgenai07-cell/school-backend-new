@@ -1,4 +1,5 @@
 from apps.common.models import BaseModel
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -8,6 +9,7 @@ class Department(BaseModel):
 
     class Meta:
         db_table = 'departments'
+        unique_together = ['school', 'name']
 
     def __str__(self):
         return self.name
@@ -19,10 +21,10 @@ class Employee(BaseModel):
     user = models.OneToOneField('users.User', on_delete=models.CASCADE, related_name='employee_profile')
     designation = models.CharField(max_length=100, blank=True)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
-    salary = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    salary = models.DecimalField(max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     join_date = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
-    leave_balance = models.IntegerField(default=20, help_text="Remaining annual leave days")   # <-- NEW FIELD
+    leave_balance = models.IntegerField(default=20, validators=[MinValueValidator(0)], help_text="Remaining annual leave days")   # <-- NEW FIELD
 
     class Meta:
         db_table = 'employees'
@@ -44,14 +46,16 @@ class Employee(BaseModel):
 class Payroll(BaseModel):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payroll_records')
     month = models.CharField(max_length=20)
-    basic_salary = models.DecimalField(max_digits=12, decimal_places=2)
-    allowances = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-    deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(0)])
+    allowances = models.DecimalField(max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)])
+    deductions = models.DecimalField(max_digits=12, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     net_salary = models.DecimalField(max_digits=12, decimal_places=2, blank=True)
     paid_date = models.DateField(null=True, blank=True)
 
     class Meta:
         db_table = 'payroll'
+        # One payroll per employee per month.
+        unique_together = ['employee', 'month']
 
     def save(self, *args, **kwargs):
         self.net_salary = self.basic_salary + self.allowances - self.deductions

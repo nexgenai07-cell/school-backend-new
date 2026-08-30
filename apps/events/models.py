@@ -27,6 +27,8 @@ class EventParticipation(BaseModel):
 
     class Meta:
         db_table = 'event_participation'
+        # A student can register for a given event only once.
+        unique_together = ['event', 'student']
 
     def clean(self):
         if self.event_id and self.event.max_participants:
