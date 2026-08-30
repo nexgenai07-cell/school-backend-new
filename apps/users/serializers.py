@@ -3,11 +3,19 @@ from .models import User, Student, Teacher, Staff, Parent
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=6)
+    password = serializers.CharField(write_only=True, min_length=8)
 
     class Meta:
         model = User
         fields = ['id', 'name', 'email', 'password', 'role']
+
+    def validate_password(self, value):
+        # Run Django's configured AUTH_PASSWORD_VALIDATORS (similarity,
+        # min length 8, common passwords, numeric-only).
+        from django.contrib.auth.password_validation import validate_password
+        validate_password(value)
+        return value
+
 
     def create(self, validated_data):
         return User.objects.create_user(

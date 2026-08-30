@@ -44,6 +44,8 @@ DUP_SPECS = [
     ("canteen.MenuItem", ["school", "name"], None, None),
     ("documents.Document", ["user", "doc_type"], None, None),
     ("events.EventParticipation", ["event", "student"], None, None),
+    ("assignments.Submission", ["assignment", "student"], None, None),
+    ("transport.BusStop", ["route", "stop_order"], None, None),
     ("transport.Route", ["school", "name"], None, None),
     ("transport.BusStop", ["route", "name"], None, None),
     ("transport.BusStudent", ["student"], None, None),

@@ -1,6 +1,7 @@
 from apps.common.models import BaseModel
-from django.db import models
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import MinValueValidator
+from django.db import models
 
 class Event(BaseModel):
     EVENT_TYPE_CHOICES = [('academic', 'Academic'), ('sports', 'Sports'), ('other', 'Other')]
@@ -11,7 +12,11 @@ class Event(BaseModel):
     description = models.TextField(blank=True)
     organizer = models.ForeignKey('users.Staff', on_delete=models.SET_NULL, null=True, related_name='organized_events')
     location = models.CharField(max_length=150, blank=True)
-    max_participants = models.IntegerField(null=True, blank=True, help_text="Leave blank for unlimited")   # <-- NEW FIELD
+    max_participants = models.IntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(1)],
+        help_text="Leave blank for unlimited",
+    )
 
     class Meta:
         db_table = 'events'

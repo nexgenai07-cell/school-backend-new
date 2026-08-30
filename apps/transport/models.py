@@ -43,8 +43,9 @@ class BusStop(BaseModel):
     class Meta:
         db_table = 'bus_stops'
         ordering = ['stop_order']
-        # Same route cannot have two stops with the same name.
-        unique_together = ['route', 'name']
+        # Same route cannot have two stops with the same name,
+        # nor two stops sharing the same sequence position.
+        unique_together = [['route', 'name'], ['route', 'stop_order']]
 
     def __str__(self):
         return f"{self.route.name} - {self.name}"

@@ -285,10 +285,13 @@ class TransportPermission(BasePermission):
 
 
 class AuditLogPermission(BasePermission):
+    """Admin has full control over audit logs; other roles read-only."""
     def has_permission(self, request, view):
-        if request.method not in SAFE_METHODS:
+        if not request.user.is_authenticated:
             return False
-        return request.user.is_authenticated and request.user.role == 'admin'
+        if request.user.role == 'admin':
+            return True
+        return request.method in SAFE_METHODS
 
 
 class PTMPermission(BasePermission):
@@ -347,6 +350,16 @@ class CanteenPermission(BasePermission):
                 return student.user_id == request.user.id
             if request.user.role == 'parent':
                 return student.parent.user_id == request.user.id
+
+
+class CanteenMenuPermission(BasePermission):
+    """Menu/category management: staff and admin only. Everyone else read-only."""
+    def has_permission(self, request, view):
+        if not request.user.is_authenticated:
+            return False
+        if request.user.role in ['admin', 'staff']:
+            return True
+        return request.method in SAFE_METHODS
         return False
 
 
@@ -414,7 +427,10 @@ class AutomationPermission(BasePermission):
 
 
 class NotificationLogPermission(BasePermission):
+    """Admin has full control over notification logs; other roles read-only."""
     def has_permission(self, request, view):
-        if request.method not in SAFE_METHODS:
+        if not request.user.is_authenticated:
             return False
-        return request.user.is_authenticated and request.user.role == 'admin'
+        if request.user.role == 'admin':
+            return True
+        return request.method in SAFE_METHODS

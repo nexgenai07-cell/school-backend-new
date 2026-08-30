@@ -14,6 +14,14 @@ class Visitor(BaseModel):
     class Meta:
         db_table = 'visitors'
 
+    def clean(self):
+        if self.in_time and self.out_time and self.out_time < self.in_time:
+            raise DjangoValidationError("out_time cannot be before in_time.")
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.name
 
@@ -48,6 +56,9 @@ class EntryExitLog(BaseModel):
         unique_together = ['student', 'entry_time']
 
     def clean(self):
+        if self.entry_time and self.exit_time and self.exit_time < self.entry_time:
+            raise DjangoValidationError("exit_time cannot be before entry_time.")
+
         if self.student_id and self.entry_time:
             duplicate = EntryExitLog.objects.filter(
                 student_id=self.student_id, entry_time=self.entry_time

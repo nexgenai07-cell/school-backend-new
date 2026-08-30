@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 env = environ.Env()
 environ.Env.read_env(BASE_DIR / '.env')
 
-SECRET_KEY = env('SECRET_KEY', default='change-me')
+SECRET_KEY = env('SECRET_KEY')  # no insecure fallback — fail fast if missing
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
@@ -105,7 +105,26 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'apps.common.pagination.StandardResultsPagination',
     'EXCEPTION_HANDLER': 'apps.common.exceptions.custom_exception_handler',
+    # Brute-force protection: rate-limit every endpoint (login included).
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '2000/day',
+        'anon': '200/day',
+    },
 }
+
+# Enforced via RegisterSerializer.validate_password (create_user does not
+# call these automatically for custom user models).
+AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+     'OPTIONS': {'min_length': 8}},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
+]
 
 CORS_ALLOW_ALL_ORIGINS = True  # tighten in prod.py
 

@@ -48,7 +48,7 @@ class Exam(BaseModel):
     teacher = models.ForeignKey('users.Teacher', on_delete=models.SET_NULL, null=True, related_name='exams')
     exam_type = models.CharField(max_length=20, choices=EXAM_TYPE_CHOICES)
     date = models.DateField()
-    total_marks = models.IntegerField()
+    total_marks = models.IntegerField(validators=[MinValueValidator(1)])
     description = models.TextField(blank=True)
 
     class Meta:

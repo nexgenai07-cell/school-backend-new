@@ -15,6 +15,12 @@ class AttendanceSerializer(serializers.ModelSerializer):
     def validate(self, data):
         student = data.get('student') or getattr(self.instance, 'student', None)
         date = data.get('date') or getattr(self.instance, 'date', None)
+
+        if date:
+            from django.utils import timezone
+            if date > timezone.localdate():
+                raise serializers.ValidationError("Attendance cannot be marked for a future date.")
+
         qs = Attendance.objects.filter(student=student, date=date)
         if self.instance:
             qs = qs.exclude(id=self.instance.id)

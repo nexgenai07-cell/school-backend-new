@@ -95,6 +95,12 @@ class Leave(BaseModel):
             self.employee.leave_balance -= requested_days
             self.employee.save(update_fields=['leave_balance'])
 
+        # Refund: un-approving (or rejecting) a previously approved leave
+        # returns the reserved days to the employee's balance.
+        if old_status == 'approved' and self.status != 'approved':
+            self.employee.leave_balance += requested_days
+            self.employee.save(update_fields=['leave_balance'])
+
         super().save(*args, **kwargs)
 
         if old_status is not None and old_status != self.status:

@@ -27,6 +27,13 @@ class ExpenseSerializer(serializers.ModelSerializer):
             )
         return value
 
+    def validate_date(self, value):
+        # Business rule: expenses are recorded after they happen.
+        from django.utils import timezone
+        if value and value > timezone.localdate():
+            raise serializers.ValidationError("Expense date cannot be in the future.")
+        return value
+
 
 class FeeSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.user.name', read_only=True)
@@ -35,7 +42,22 @@ class FeeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Fee
         fields = '__all__'
-        read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted']
+        # 'status' is managed exclusively by Payment.save() (auto-recalc from
+        # actual payments) — manual PATCH would let it contradict reality.
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_deleted', 'status']
+
+    def validate(self, data):
+        # Strict rule: a fee must follow its fee structure's amount exactly.
+        fee_structure = data.get('fee_structure') or getattr(self.instance, 'fee_structure', None)
+        amount = data.get('amount') or getattr(self.instance, 'amount', None)
+
+        if fee_structure and amount is not None and amount != fee_structure.amount:
+            raise serializers.ValidationError(
+                f"Fee amount must exactly match the fee structure amount "
+                f"({fee_structure.amount}). Structure: '{fee_structure.title}', "
+                f"sent: {amount}."
+            )
+        return data
 
 
 class PaymentSerializer(serializers.ModelSerializer):

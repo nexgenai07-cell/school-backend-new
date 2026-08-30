@@ -36,7 +36,7 @@ class BookIssue(BaseModel):
     student = models.ForeignKey('users.Student', on_delete=models.CASCADE, related_name='book_issues')
     due_date = models.DateField()
     return_date = models.DateField(null=True, blank=True)
-    fine = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    fine = models.DecimalField(max_digits=8, decimal_places=2, default=0, validators=[MinValueValidator(0)])
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='issued')
 
     class Meta:
