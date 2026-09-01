@@ -116,12 +116,18 @@ def _module_or_404(key):
 def _model(cfg):
     return reg.get_model(cfg)
 
+def _has_field(model, name):
+    return any(f.name == name for f in model._meta.fields)
 
 @superuser_required
 def module_list(request, module):
     cfg = _module_or_404(module)
     model = _model(cfg)
-    qs = model._base_manager.filter(is_deleted=False)
+    qs = model._base_manager.all()
+    # School (tenants.School) is a plain models.Model without soft-delete;
+    # only apply is_deleted filtering when the model actually has the field.
+    if _has_field(model, 'is_deleted'):
+        qs = qs.filter(is_deleted=False)
 
     q = request.GET.get('q', '').strip()
     if q and cfg.get('search_fields'):
@@ -215,5 +221,9 @@ def module_delete(request, module, pk):
         model = _model(cfg)
         # Soft delete via direct update — bypasses model save()/full_clean()
         # overrides that could reject a legitimate delete.
-        model._base_manager.filter(pk=pk).update(is_deleted=True, deleted_at=timezone.now())
+        if _has_field(model, 'is_deleted'):
+            model._base_manager.filter(pk=pk).update(is_deleted=True, deleted_at=timezone.now())
+        else:
+            # Non-soft-delete models (e.g. tenants.School) actually delete.
+            model._base_manager.filter(pk=pk).delete()
     return redirect('admin_panel_list', module=module)
