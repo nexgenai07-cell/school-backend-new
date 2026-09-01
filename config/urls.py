@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/register/', RegisterView.as_view(), name='register'),
     path('api/tenants/', include('apps.tenants.urls')),
+    path('custom-admin/', include('apps.common.admin_urls')),
 
     path('api/users/', include('apps.users.urls')),
     path('api/academics/', include('apps.academics.urls')),

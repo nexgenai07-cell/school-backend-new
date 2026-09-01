@@ -1,0 +1,50 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}{% if obj %}Edit{% else %}Add{% endif %} {{ cfg.label }} — NexGen Admin{% endblock %}
+{% block page_title %}{% if obj %}Edit {{ cfg.label }}{% else %}Add {{ cfg.label }}{% endif %}{% endblock %}
+{% block page_sub %}{% if obj %}Record #{{ obj.pk }}{% else %}Create a new {{ cfg.label|lower }} record{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card form-card">
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <div class="form-grid">
+      {% if has_school %}
+      <div class="form-field full">
+        <label>School *</label>
+        {{ schools }}
+        <select name="school" required>
+          <option value="">— Select school —</option>
+          {% for s in schools %}
+          <option value="{{ s.id }}" {% if current_school_id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.slug }})</option>
+          {% endfor %}
+        </select>
+        <span class="errorlist" style="font-size:11px; color:#64748B;">
+          Required: every record belongs to a school.
+        </span>
+      </div>
+      {% endif %}
+
+      {% for field in form %}
+      <div class="form-field {% if field.field.widget.input_type == 'text' and field.name in 'name,title,description,reason' %}full{% endif %}">
+        <label>{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+      {% endfor %}
+
+      {% if form.non_field_errors %}
+      <div class="form-field full">
+        <ul class="errorlist">{% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}</ul>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="form-footer">
+      <button type="submit" class="btn btn-primary">
+        <i data-lucide="check"></i> {% if obj %}Save Changes{% else %}Create {{ cfg.label }}{% endif %}
+      </button>
+      <a class="btn btn-ghost" href="{% url 'admin_panel_list' module_key %}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

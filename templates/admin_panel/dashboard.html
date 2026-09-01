@@ -1,0 +1,111 @@
+{% extends 'admin_panel/base.html' %}
+{% block title %}Dashboard — NexGen Admin{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}Platform-wide overview across all schools{% endblock %}
+
+{% block content %}
+<div class="kpi-grid">
+  {% for kpi in kpis %}
+  <div class="card kpi">
+    <div class="kpi-icon" style="background: {{ kpi.color }};"><i data-lucide="{{ kpi.icon }}"></i></div>
+    <div>
+      <div class="label">{{ kpi.label }}</div>
+      <div class="value">{{ kpi.value }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="chart-grid">
+  <div class="card chart-card">
+    <h3>Students per School</h3>
+    <div class="chart-wrap"><canvas id="chartStudents"></canvas></div>
+  </div>
+  <div class="card chart-card">
+    <h3>User Roles Split</h3>
+    <div class="chart-wrap"><canvas id="chartRoles"></canvas></div>
+  </div>
+  <div class="card chart-card">
+    <h3>Fee Collection Trend (Last 6 Months)</h3>
+    <div class="chart-wrap"><canvas id="chartFees"></canvas></div>
+  </div>
+  <div class="card chart-card">
+    <h3>Exams by Type</h3>
+    <div class="chart-wrap"><canvas id="chartExams"></canvas></div>
+  </div>
+</div>
+
+<div class="card table-card">
+  <div class="table-toolbar"><h3>Schools</h3></div>
+  <table>
+    <thead><tr><th>ID</th><th>Name</th><th>Slug</th><th>Database</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for s in schools %}
+      <tr>
+        <td>{{ s.id }}</td>
+        <td><strong>{{ s.name }}</strong></td>
+        <td>{{ s.slug }}</td>
+        <td><span class="badge gray">{{ s.database_alias }}</span></td>
+        <td>{% if s.is_active %}<span class="badge green">Active</span>{% else %}<span class="badge red">Inactive</span>{% endif %}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="empty">No schools yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{{ students_per_school|json_script:"data-students" }}
+{{ roles_split|json_script:"data-roles" }}
+{{ exams_by_type|json_script:"data-exams" }}
+{{ fee_trend_labels|json_script:"data-fee-labels" }}
+{{ fee_trend_values|json_script:"data-fee-values" }}
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PALETTE = ['#6366F1', '#10B981', '#F59E0B', '#0EA5E9', '#EF4444', '#8B5CF6', '#EC4899'];
+const gridOpts = { grid: { color: '#F1F5F9' }, ticks: { color: '#64748B' } };
+
+const students = JSON.parse(JSON.parse(document.getElementById('data-students').textContent));
+new Chart(document.getElementById('chartStudents'), {
+  type: 'bar',
+  data: { labels: students.map(d => d.label),
+          datasets: [{ data: students.map(d => d.value), backgroundColor: '#6366F1',
+                       borderRadius: 8, maxBarThickness: 42 }] },
+  options: { plugins: { legend: { display: false } },
+             scales: { x: gridOpts, y: { ...gridOpts, beginAtZero: true } } }
+});
+
+const roles = JSON.parse(JSON.parse(document.getElementById('data-roles').textContent));
+new Chart(document.getElementById('chartRoles'), {
+  type: 'doughnut',
+  data: { labels: roles.map(d => d.label),
+          datasets: [{ data: roles.map(d => d.value),
+                       backgroundColor: PALETTE, borderWidth: 3, borderColor: '#fff' }] },
+  options: { cutout: '62%', plugins: { legend: { position: 'bottom' } } }
+});
+
+const feeLabels = JSON.parse(JSON.parse(document.getElementById('data-fee-labels').textContent));
+const feeValues = JSON.parse(JSON.parse(document.getElementById('data-fee-values').textContent));
+new Chart(document.getElementById('chartFees'), {
+  type: 'line',
+  data: { labels: feeLabels,
+          datasets: [{ data: feeValues, borderColor: '#6366F1', tension: .4, fill: true,
+                       backgroundColor: 'rgba(99,102,241,.12)', pointRadius: 4,
+                       pointBackgroundColor: '#6366F1' }] },
+  options: { plugins: { legend: { display: false } },
+             scales: { x: gridOpts, y: { ...gridOpts, beginAtZero: true } } }
+});
+
+const exams = JSON.parse(JSON.parse(document.getElementById('data-exams').textContent));
+new Chart(document.getElementById('chartExams'), {
+  type: 'bar',
+  data: { labels: exams.map(d => d.label),
+          datasets: [{ data: exams.map(d => d.value), backgroundColor: '#10B981',
+                       borderRadius: 8, maxBarThickness: 42 }] },
+  options: { plugins: { legend: { display: false } },
+             scales: { x: gridOpts, y: { ...gridOpts, beginAtZero: true } } }
+});
+</script>
+{% endblock %}
