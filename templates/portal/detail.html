@@ -1,0 +1,31 @@
+{% extends 'portal/base.html' %}
+{% block title %}{{ cfg.label }} #{{ obj.pk }} — NexGen Portal{% endblock %}
+{% block page_title %}{{ cfg.label }} Detail{% endblock %}
+{% block page_sub %}Record #{{ obj.pk }}{% endblock %}
+
+{% block top_actions %}
+<a class="btn btn-ghost" href="{% url 'portal_list' role_key module %}"><i data-lucide="arrow-left"></i> Back to list</a>
+{% endblock %}
+
+{% block content %}
+<div class="card table-card">
+  <div class="table-toolbar"><h3>Details</h3></div>
+  <div class="detail-grid">
+    {% for field in fields %}
+    <div class="detail-row">
+      <div class="k">{{ field.label }}</div>
+      <div class="v">{{ field.value|default:'—' }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% for group in related %}
+<div class="card related-card">
+  <h4>{{ group.label }} ({{ group.count }})</h4>
+  <ul>
+    {% for item in group.items %}<li>{{ item }}</li>{% endfor %}
+  </ul>
+</div>
+{% endfor %}
+{% endblock %}

@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/register/', RegisterView.as_view(), name='register'),
     path('api/tenants/', include('apps.tenants.urls')),
     path('custom-admin/', include('apps.common.admin_urls')),
+    path('portal/', include('apps.common.portal_urls')),
 
     path('api/users/', include('apps.users.urls')),
     path('api/academics/', include('apps.academics.urls')),

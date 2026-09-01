@@ -1,0 +1,45 @@
+{% extends 'portal/base.html' %}
+{% block title %}{{ cfg.label }} — NexGen Portal{% endblock %}
+{% block page_title %}{{ cfg.label }}{% endblock %}
+{% block page_sub %}{{ page.paginator.count }} record(s){% endblock %}
+
+{% block content %}
+<div class="card table-card">
+  <div class="table-toolbar">
+    <h3>{{ cfg.label }} Records</h3>
+    {% if cfg.search_fields %}
+    <form method="get" class="search-box">
+      <i data-lucide="search"></i>
+      <input type="text" name="q" value="{{ q }}" placeholder="Search {{ cfg.label|lower }}...">
+    </form>
+    {% endif %}
+  </div>
+  <table>
+    <thead>
+      <tr>
+        {% for h in headers %}<th>{{ h|title }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr onclick="window.location='{% url 'portal_detail' role_key module row.pk %}'" style="cursor:pointer;">
+        {% for cell in row.cells %}<td>{{ cell }}</td>{% endfor %}
+      </tr>
+      {% empty %}
+      <tr><td colspan="{{ headers|length }}" class="empty">No records found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if page.paginator.num_pages > 1 %}
+  <div class="pagination">
+    {% if page.has_previous %}
+      <a href="?page={{ page.previous_page_number }}{% if q %}&q={{ q }}{% endif %}">Prev</a>
+    {% endif %}
+    <span class="current">Page {{ page.number }} / {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}
+      <a href="?page={{ page.next_page_number }}{% if q %}&q={{ q }}{% endif %}">Next</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
